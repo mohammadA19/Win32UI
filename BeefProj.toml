@@ -1,0 +1,6 @@
+FileVersion = 1
+
+[Project]
+Name = "Win32UI"
+TargetType = "BeefLib"
+StartupObject = "Win32UI.Program"

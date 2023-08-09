@@ -1,0 +1,6 @@
+FileVersion = 1
+Dependencies = {corlib = "*", Win32UI = "*"}
+
+[Project]
+Name = "Win32UI.Test"
+StartupObject = "Win32UI.Test.Program"

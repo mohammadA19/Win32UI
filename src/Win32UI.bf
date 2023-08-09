@@ -1,0 +1,200 @@
+namespace Win32UI;
+using System;
+using System.Text;
+using System.Interop;
+using System.Diagnostics;
+
+public class WindowClassBuilder
+{
+	Win32.WNDCLASSEXW mStruct;
+	Span<char16>      mClassName ~ if (_.Ptr != null) delete _.Ptr;
+	Span<char16>      mMenuName ~ if (_.Ptr != null) delete _.Ptr;
+
+	static Win32.HINSTANCE sInstance = 0;
+	static Win32.HINSTANCE CurrentInstance
+	{
+		get
+		{
+			if (sInstance == 0)
+				sInstance = Win32.GetModuleHandleW(null);
+			return sInstance;
+		}
+	}
+
+	[AllowAppend]
+	public this(String className)
+	{
+		if (className == null)
+			return;
+
+		int encodedLen = UTF16.GetEncodedLen(className);
+		char16* _append1 = append char16[encodedLen+1]* (?);
+		mClassName = .(_append1, encodedLen);
+	
+		UTF16.Encode(className, (.)mClassName.Ptr, encodedLen);
+		mClassName[encodedLen] = 0;
+	}
+
+	static void SetVar(String value, ref Span<char16> dest)
+	{
+		if (dest.Ptr != null)
+			delete dest.Ptr;
+
+		int encodedLen = UTF16.GetEncodedLen(value);
+		dest.Ptr = new char16[encodedLen+1]* (?);
+
+		UTF16.Encode(value, dest.Ptr, encodedLen);
+		dest[encodedLen] = 0;
+	}
+
+	public void FillMissingValues()
+	{
+		mStruct.cbSize = sizeof(Win32.WNDCLASSEXW);
+		// mWndClassInfo.lpfnWndProc = ...;
+
+		if (mStruct.hInstance == 0)
+			mStruct.hInstance = CurrentInstance;
+
+		if (mStruct.hIcon == 0)
+			mStruct.hIcon = Win32.LoadIconW(0, Win32.IDI_APPLICATION);
+
+		if (mStruct.hCursor == 0)
+			mStruct.hCursor = Win32.LoadCursorW(0, Win32.IDC_ARROW);
+
+		if (mStruct.hbrBackground == 0)
+			mStruct.hbrBackground = Win32.GetStockObject(.WHITE_BRUSH);
+
+		if (mStruct.hIconSm == 0)
+			mStruct.hIconSm = Win32.LoadImageW(CurrentInstance, (.)(void*)5, .IMAGE_ICON, Win32.GetSystemMetrics(.SM_CXSMICON), Win32.GetSystemMetrics(.SM_CYSMICON), .LR_DEFAULTCOLOR);
+	}
+
+	public void UseStyle(Win32.WNDCLASS_STYLES style)
+	{
+		mStruct.style = style;
+	}
+
+	public void UseWindowProc(Win32.WNDPROC proc)
+	{
+		mStruct.lpfnWndProc = proc;
+	}
+
+	public void UseStandardIcon()
+	{
+		mStruct.hIcon = Win32.LoadIconW(0, Win32.IDI_APPLICATION);
+	}
+
+	public void UseIcon(Win32.HICON icon)
+	{
+		mStruct.hIcon = icon;
+	}
+
+	public void UseStandardSmallIcon()
+	{
+		mStruct.hIconSm = // Win32.LoadIconW(0, Win32.IDI_APPLICATION);
+			Win32.LoadImageW(CurrentInstance, (.)(void*)5, .IMAGE_ICON, Win32.GetSystemMetrics(.SM_CXSMICON), Win32.GetSystemMetrics(.SM_CYSMICON), .LR_DEFAULTCOLOR);
+	}
+
+	public void UseSmallIcon(Win32.HICON icon)
+	{
+		mStruct.hIconSm = icon;
+	}
+
+	public void UseStandardCursor()
+	{
+		mStruct.hCursor = Win32.LoadCursorW(0, Win32.IDC_ARROW);
+	}
+
+	public enum SystemCursor : int
+	{
+		Arrow,
+		IBeam, Wait, Cross, UpArrow, Size, Icon,
+		SizeNWSE, SizeNESW, SizeWE, SizeNS, SizeAll,
+		No, Hand, AppStarting, Help, Pin, Person,
+	}
+
+	public void UseSystemCursor(SystemCursor cursor)
+	{
+		void* val;
+
+		switch (cursor)
+		{
+		case .Arrow:       val = Win32.IDC_ARROW;
+		case .IBeam:       val = Win32.IDC_IBEAM;
+		case .Wait:        val = Win32.IDC_WAIT;
+		case .Cross:       val = Win32.IDC_CROSS;
+		case .UpArrow:     val = Win32.IDC_UPARROW;
+		case .Size:        val = Win32.IDC_SIZE;
+		case .Icon:        val = Win32.IDC_ICON;
+		case .SizeNWSE:    val = Win32.IDC_SIZENWSE;
+		case .SizeNESW:    val = Win32.IDC_SIZENESW;
+		case .SizeWE:      val = Win32.IDC_SIZEWE;
+		case .SizeNS:      val = Win32.IDC_SIZENS;
+		case .SizeAll:     val = Win32.IDC_SIZEALL;
+		case .No:          val = Win32.IDC_NO;
+		case .Hand:        val = Win32.IDC_HAND;
+		case .AppStarting: val = Win32.IDC_APPSTARTING;
+		case .Help:        val = Win32.IDC_HELP;
+		case .Pin:         val = Win32.IDC_PIN;
+		case .Person:      val = Win32.IDC_PERSON;
+		}
+
+		mStruct.hCursor = Win32.LoadCursorW(0, (.)val);
+	}
+
+	public void SetClassName(String name)
+	{
+		SetVar(name, ref mClassName);
+	}
+
+	public void SetMenuName(String name)
+	{
+		SetVar(name, ref mMenuName);
+	}
+
+	public void IncludeStyle(Win32.WNDCLASS_STYLES style)
+	{
+		mStruct.style |= style;
+	}
+
+	public void ExcludeStyle(Win32.WNDCLASS_STYLES style)
+	{
+		mStruct.style &= ~style;
+	}
+
+	public enum SystemBrush
+	{
+		White,
+		Black,
+		DarkGray,
+		Gray,
+		LightGray,
+		Hollow,
+		Null,
+	}
+
+	public void UseStockBackground(SystemBrush brush = .Null)
+	{
+		Win32.GET_STOCK_OBJECT_FLAGS flag;
+
+		switch (brush)
+		{
+		case .White: flag = .WHITE_BRUSH;
+		case .Black: flag = .BLACK_BRUSH;
+		case .DarkGray: flag = .DKGRAY_BRUSH;
+		case .Gray: flag = .GRAY_BRUSH;
+		case .LightGray: flag = .LTGRAY_BRUSH;
+		case .Hollow: flag = .HOLLOW_BRUSH;
+		case .Null: flag = .NULL_BRUSH;
+		}
+		mStruct.hbrBackground = Win32.GetStockObject(flag);
+	}
+
+	public Result<uint16> Register()
+	{
+		let r = Win32.RegisterClassExW(&mStruct);
+
+		if (r == 0)
+			return .Err;
+		return r;
+	}
+}

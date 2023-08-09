@@ -1,0 +1,5 @@
+FileVersion = 1
+Projects = {Win32UI = {Path = "."}, "Win32UI.Test" = {Path = "Win32UI.Test"}}
+
+[Workspace]
+StartupProject = "Win32UI"
