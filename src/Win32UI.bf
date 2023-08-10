@@ -198,3 +198,43 @@ public class WindowClassBuilder
 		return r;
 	}
 }
+
+[CRepr]
+public struct Point : this(int32 X, int32 Y);
+
+[CRepr]
+public struct Size : this(int32 Width, int32 Height);
+
+static
+{
+	public static Result<int> CreateWindow(char16* className, char16* windowName, Win32.WINDOW_STYLE style, Win32.WINDOW_EX_STYLE exStyle = 0, int32 x = Win32.CW_USEDEFAULT, int32 y = Win32.CW_USEDEFAULT, int32 width = Win32.CW_USEDEFAULT, int32 height = Win32.CW_USEDEFAULT, HWND parentWindow = 0, HMENU menu = 0, HINSTANCE instance = 0, void* param = null)
+	{
+		var instance;
+		if (instance == 0)
+			instance = WindowClassBuilder.CurrentInstance;
+		
+		let r = Win32.CreateWindowExW(exStyle, className, windowName, style, x, y, width, height, parentWindow, menu, instance, param);
+
+		if (r == .Err)
+			return 0;
+		return r;
+	}
+
+	public static Result<int> CreateWindow(uint16 windowClass, char16* windowName, Win32.WINDOW_STYLE style, Win32.WINDOW_EX_STYLE exStyle = 0, int32 x = Win32.CW_USEDEFAULT, int32 y = Win32.CW_USEDEFAULT, int32 width = Win32.CW_USEDEFAULT, int32 height = Win32.CW_USEDEFAULT, HWND parentWindow = 0, HMENU menu = 0, HINSTANCE instance = 0, void* param = null)
+	{
+		return CreateWindow(exStyle, (void*)(int)className, windowName, style, x, y, width, height, parentWindow, menu, instance, param);
+	}
+
+	const POINT UseDefaultPosition = .(Win32.CW_USEDEFAULT, Win32.CW_USEDEFAULT);
+	const SIZE UseDefaultSize = .(Win32.CW_USEDEFAULT, Win32.CW_USEDEFAULT);
+	
+	public static Result<int> CreateWindow(char16* className, char16* windowName, Win32.WINDOW_STYLE style, Win32.WINDOW_EX_STYLE exStyle = 0, POINT position = UseDefaultPosition, Size size = UseDefaultSize, HWND parentWindow = 0, HMENU menu = 0, HINSTANCE instance = 0, void* param = null)
+	{
+		return CreateWindow(exStyle, (void*)(int)className, windowName, style, x, y, width, height, parentWindow, menu, instance, param);
+	}
+
+	public static Result<int> CreateWindow(uint16 className, char16* windowName, Win32.WINDOW_STYLE style, Win32.WINDOW_EX_STYLE exStyle = 0, POINT position = UseDefaultPosition, Size size = UseDefaultSize, HWND parentWindow = 0, HMENU menu = 0, HINSTANCE instance = 0, void* param = null)
+	{
+		return CreateWindow(exStyle, (void*)(int)className, windowName, style, position.X, position.Y, size.Width, size.Height, parentWindow, menu, instance, param);
+	}
+}
