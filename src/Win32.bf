@@ -3,19 +3,19 @@ using System;
 
 public static class Win32
 {
-	typealias HANDLE = int;
-	typealias HGDIOBJ = int;
+	public typealias HANDLE = int;
+	public typealias HGDIOBJ = int;
 	public typealias HINSTANCE = int;
 	public typealias HICON = int;
 	public typealias HMENU = int;
-	typealias HCURSOR = int;
-	typealias HBRUSH = int;
-	typealias PWSTR = char16*;
-	typealias HRESULT = int32;
-	typealias HWND = int;
-	typealias LPARAM = int;
-	typealias LRESULT = int;
-	typealias WPARAM = uint;
+	public typealias HCURSOR = int;
+	public typealias HBRUSH = int;
+	public typealias PWSTR = char16*;
+	public typealias HRESULT = int32;
+	public typealias HWND = int;
+	public typealias LPARAM = int;
+	public typealias LRESULT = int;
+	public typealias WPARAM = uint;
 
 	public const int32 CW_USEDEFAULT = -2147483648;
 
@@ -3694,23 +3694,6 @@ public static class Win32
 		CS_DROPSHADOW = 131072,
 	}
 	
-	[CRepr]
-	public struct WNDCLASSEXW
-	{
-		public uint32 cbSize;
-		public WNDCLASS_STYLES style;
-		public WNDPROC lpfnWndProc;
-		public int32 cbClsExtra;
-		public int32 cbWndExtra;
-		public HINSTANCE hInstance;
-		public HICON hIcon;
-		public HCURSOR hCursor;
-		public HBRUSH hbrBackground;
-		public PWSTR lpszMenuName;
-		public PWSTR lpszClassName;
-		public HICON hIconSm;
-	}
-
 	[AllowDuplicates]
 	public enum SYSTEM_METRICS_INDEX : uint32
 	{
@@ -3809,6 +3792,69 @@ public static class Win32
 		SM_TABLETPC = 86,
 		SM_XVIRTUALSCREEN = 76,
 		SM_YVIRTUALSCREEN = 77,
+	}
+
+	[CRepr]
+	public struct RECT
+	{
+		public int32 left;
+		public int32 top;
+		public int32 right;
+		public int32 bottom;
+	}
+
+	[CRepr]
+	public struct RECTL
+	{
+		public int32 left;
+		public int32 top;
+		public int32 right;
+		public int32 bottom;
+	}
+
+	[CRepr]
+	public struct POINT
+	{
+		public int32 x;
+		public int32 y;
+	}
+
+	[CRepr]
+	public struct POINTL
+	{
+		public int32 x;
+		public int32 y;
+	}
+
+	[CRepr]
+	public struct SIZE
+	{
+		public int32 cx;
+		public int32 cy;
+	}
+
+	[CRepr]
+	public struct POINTS
+	{
+		public int16 x;
+		public int16 y;
+	}
+
+	[CRepr]
+	public struct WNDCLASSEXW
+	{
+		public uint32 cbSize;
+		public WNDCLASS_STYLES style;
+		public WNDPROC lpfnWndProc;
+		public int32 cbClsExtra;
+		public int32 cbWndExtra;
+		public HINSTANCE hInstance;
+		public HICON hIcon;
+		public HCURSOR hCursor;
+		public HBRUSH hbrBackground;
+		public PWSTR lpszMenuName;
+		public PWSTR lpszClassName;
+		public HICON hIconSm;
 	}
 
 	public function LRESULT WNDPROC(HWND param0, uint32 param1, WPARAM param2, LPARAM param3);
