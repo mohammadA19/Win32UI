@@ -243,7 +243,7 @@ public struct ModuleHandle : Win32.HINSTANCE;
 
 static
 {
-	public static Result<int> CreateWindow(char16* className, char16* windowName, Win32.WINDOW_STYLE style, Win32.WINDOW_EX_STYLE exStyle = 0, int32 x = Win32.CW_USEDEFAULT, int32 y = Win32.CW_USEDEFAULT, int32 width = Win32.CW_USEDEFAULT, int32 height = Win32.CW_USEDEFAULT, WindowHandle parentWindow = 0, MenuHandle menu = 0, ModuleHandle instance = 0, void* param = null)
+	public static Result<WindowHandle> CreateWindow(char16* className, char16* windowName, Win32.WINDOW_STYLE style, Win32.WINDOW_EX_STYLE exStyle = 0, int32 x = Win32.CW_USEDEFAULT, int32 y = Win32.CW_USEDEFAULT, int32 width = Win32.CW_USEDEFAULT, int32 height = Win32.CW_USEDEFAULT, WindowHandle parentWindow = 0, MenuHandle menu = 0, ModuleHandle instance = 0, void* param = null)
 	{
 		Win32.HINSTANCE _instance = (.)instance;
 		if (_instance == 0)
@@ -253,10 +253,10 @@ static
 
 		if (r == 0)
 			return .Err;
-		return r;
+		return (.)r;
 	}
 
-	public static Result<int> CreateWindow(uint16 windowClass, char16* windowName, Win32.WINDOW_STYLE style, Win32.WINDOW_EX_STYLE exStyle = 0, int32 x = Win32.CW_USEDEFAULT, int32 y = Win32.CW_USEDEFAULT, int32 width = Win32.CW_USEDEFAULT, int32 height = Win32.CW_USEDEFAULT, WindowHandle parentWindow = 0, MenuHandle menu = 0, ModuleHandle instance = 0, void* param = null)
+	public static Result<WindowHandle> CreateWindow(uint16 windowClass, char16* windowName, Win32.WINDOW_STYLE style, Win32.WINDOW_EX_STYLE exStyle = 0, int32 x = Win32.CW_USEDEFAULT, int32 y = Win32.CW_USEDEFAULT, int32 width = Win32.CW_USEDEFAULT, int32 height = Win32.CW_USEDEFAULT, WindowHandle parentWindow = 0, MenuHandle menu = 0, ModuleHandle instance = 0, void* param = null)
 	{
 		return CreateWindow(windowClass, windowName, style, exStyle, x, y, width, height, parentWindow, menu, instance, param);
 	}
@@ -264,12 +264,12 @@ static
 	const Point UseDefaultPosition = .(Win32.CW_USEDEFAULT, Win32.CW_USEDEFAULT);
 	const Size UseDefaultSize = .(Win32.CW_USEDEFAULT, Win32.CW_USEDEFAULT);
 	
-	public static Result<int> CreateWindow(char16* className, char16* windowName, Win32.WINDOW_STYLE style, Win32.WINDOW_EX_STYLE exStyle = 0, Point position = UseDefaultPosition, Size size = UseDefaultSize, WindowHandle parentWindow = 0, MenuHandle menu = 0, ModuleHandle instance = 0, void* param = null)
+	public static Result<WindowHandle> CreateWindow(char16* className, char16* windowName, Win32.WINDOW_STYLE style, Win32.WINDOW_EX_STYLE exStyle = 0, Point position = UseDefaultPosition, Size size = UseDefaultSize, WindowHandle parentWindow = 0, MenuHandle menu = 0, ModuleHandle instance = 0, void* param = null)
 	{
 		return CreateWindow(className, windowName, style, exStyle, position.X, position.Y, size.Width, size.Height, parentWindow, menu, instance, param);
 	}
 
-	public static Result<int> CreateWindow(uint16 className, char16* windowName, Win32.WINDOW_STYLE style, Win32.WINDOW_EX_STYLE exStyle = 0, Point position = UseDefaultPosition, Size size = UseDefaultSize, WindowHandle parentWindow = 0, MenuHandle menu = 0, ModuleHandle instance = 0, void* param = null)
+	public static Result<WindowHandle> CreateWindow(uint16 className, char16* windowName, Win32.WINDOW_STYLE style, Win32.WINDOW_EX_STYLE exStyle = 0, Point position = UseDefaultPosition, Size size = UseDefaultSize, WindowHandle parentWindow = 0, MenuHandle menu = 0, ModuleHandle instance = 0, void* param = null)
 	{
 		return CreateWindow(className, windowName, style, exStyle, position.X, position.Y, size.Width, size.Height, parentWindow, menu, instance, param);
 	}
