@@ -277,8 +277,8 @@ static
 
 public class WindowBuilder
 {
-	void* mClassName;
-	char16* mWindowName;
+	void* mClassName ~ if (IsNotAtom!(_)) delete _;
+	char16* mWindowName ~ delete _;
 	Win32.WINDOW_STYLE mStyle;
 	Win32.WINDOW_EX_STYLE mExStyle;
 	Point mPos;
@@ -287,6 +287,16 @@ public class WindowBuilder
 	MenuHandle mMenu;
 	ModuleHandle mInstance;
 	void* mParam;
+
+	static mixin IsAtom(var i)
+	{
+		0x0 < i && i < 0x10000
+	}
+
+	static mixin IsNotAtom(var i)
+	{
+		0x0 >= i || i >= 0x10000
+	}
 
 	public Result<WindowHandle> Create()
 	{
