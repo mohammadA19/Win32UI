@@ -42,6 +42,7 @@ public class WindowClassBuilder
 
 		int encodedLen = UTF16.GetEncodedLen(value);
 		dest.Ptr = new char16[encodedLen+1]* (?);
+		dest.Length = encodedLen;
 
 		UTF16.Encode(value, dest.Ptr, encodedLen);
 		dest[encodedLen] = 0;
@@ -277,8 +278,9 @@ static
 
 public class WindowBuilder
 {
-	void* mClassName ~ if (_ != null && IsNotAtom!(_)) delete _;
-	char16* mWindowName ~ if (_ != null) delete _;
+	char16* mClassName ~ DeleteVar(ref _, true); // if (_ != null && IsNotAtom(_)) delete _;
+	// ^ this can be either a pointer to wchar or uint16 value (called atom). TAKE CARE: If it is atom, it must not be deleted.
+	char16* mWindowName ~ DeleteVar(ref _); // ~ if (_ != null) delete _;
 	Win32.WINDOW_STYLE mStyle;
 	Win32.WINDOW_EX_STYLE mExStyle;
 	Point mPos;
@@ -288,18 +290,65 @@ public class WindowBuilder
 	ModuleHandle mInstance;
 	void* mParam;
 
-	static mixin IsAtom(var i)
+	static bool IsAtom(char16* v)
 	{
-		0x0 < i && i < 0x10000
+		let i = (int)v;
+		return 0x0 < i && i < 0x10000;
 	}
 
-	static mixin IsNotAtom(var i)
+	static bool IsNotAtom(char16* v)
 	{
-		0x0 >= i || i >= 0x10000
+		let i = (int)v;
+		return 0x0 >= i || i >= 0x10000;
 	}
 
-	public void FromClass(uint16 classAtom) => mClassName = (void*)(int)classAtom;
-	public void FromClass(char16* classNamePtr) => mClassName = (.)classNamePtr;
+	static void DeleteVar(ref char16* dest, bool checkIfAtom = false)
+	{
+		if (dest != null)
+		{
+			if (!checkIfAtom || IsNotAtom(dest))
+				delete dest;
+		}
+	}
+
+	static void ConvertToUtf16(StringView str, out char16* newPtr)
+	{
+		int encodedLen = UTF16.GetEncodedLen(str);
+		newPtr = new char16[encodedLen+1]* (?);
+
+		UTF16.Encode(value, newPtr, encodedLen);
+		newPtr[encodedLen] = 0;
+	}
+
+	public void OfClass(uint16 classAtom)
+	{
+		DeleteVar(mClassName, true);
+		mClassName = (void*)(int)classAtom;
+	}
+
+	public void OfClass(char16* classNamePtr)
+	{
+		DeleteVar(mClassName, true);
+		mClassName = (.)classNamePtr;
+	}
+
+	public void OfClass(StringView value)
+	{
+		DeleteVar(mClassName, true);
+		ConvertToUtf16(value, out mClassName);
+	}
+
+	public void WithTitle(char16* strPtr)
+	{
+		DeleteVar(mWindowName);
+		mWindowName = strPtr;
+	}
+
+	public void WithTitle(StringView str)
+	{
+		DeleteVar(mWindowName);
+		ConvertToUtf16(str, out mClassName);
+	}
 
 	public Result<WindowHandle> Create()
 	{
