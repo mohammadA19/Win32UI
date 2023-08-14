@@ -292,14 +292,13 @@ public class WindowBuilder
 
 	static bool IsAtom(char16* v)
 	{
-		let i = (int)v;
+		let i = (int)(void*)v;
 		return 0x0 < i && i < 0x10000;
 	}
 
 	static bool IsNotAtom(char16* v)
 	{
-		let i = (int)v;
-		return 0x0 >= i || i >= 0x10000;
+		return !IsAtom(v);
 	}
 
 	static void DeleteVar(ref char16* dest, bool checkIfAtom = false)
@@ -316,49 +315,111 @@ public class WindowBuilder
 		int encodedLen = UTF16.GetEncodedLen(str);
 		newPtr = new char16[encodedLen+1]* (?);
 
-		UTF16.Encode(value, newPtr, encodedLen);
+		UTF16.Encode(str, newPtr, encodedLen);
 		newPtr[encodedLen] = 0;
 	}
 
 	public void OfClass(uint16 classAtom)
 	{
-		DeleteVar(mClassName, true);
-		mClassName = (void*)(int)classAtom;
+		DeleteVar(ref mClassName, true);
+		mClassName = (char16*)(void*)(int)classAtom;
 	}
 
 	public void OfClass(char16* classNamePtr)
 	{
-		DeleteVar(mClassName, true);
+		DeleteVar(ref mClassName, true);
 		mClassName = (.)classNamePtr;
 	}
 
 	public void OfClass(StringView value)
 	{
-		DeleteVar(mClassName, true);
+		DeleteVar(ref mClassName, true);
 		ConvertToUtf16(value, out mClassName);
 	}
 
 	public void WithTitle(char16* strPtr)
 	{
-		DeleteVar(mWindowName);
+		DeleteVar(ref mWindowName);
 		mWindowName = strPtr;
 	}
 
 	public void WithTitle(StringView str)
 	{
-		DeleteVar(mWindowName);
+		DeleteVar(ref mWindowName);
 		ConvertToUtf16(str, out mClassName);
 	}
+
+	public void SetStyle(Win32.WINDOW_STYLE style) => mStyle = style;
+	public void AddStyle(Win32.WINDOW_STYLE style) => mStyle |= style;
+	public void RemoveStyle(Win32.WINDOW_STYLE style) => Enum.Exclude(mStyle, style);
+
+	public void SetStyle(WindowStyle style) => mStyle = (.)style;
+	public void AddStyle(WindowStyle style) => mStyle |= (.)style;
+	public void RemoveStyle(WindowStyle style) => Enum.Exclude(mStyle, (.)style);
+
+	public void SetExStyle(Win32.WINDOW_EX_STYLE style) => mExStyle = style;
+	public void AddExStyle(Win32.WINDOW_EX_STYLE style) => mExStyle |= style;
+	public void RemoveExStyle(Win32.WINDOW_EX_STYLE style) => Enum.Exclude(mExStyle, style);
+
+	public void UseDefaultPosition() => mPos = .(Win32.CW_USEDEFAULT, Win32.CW_USEDEFAULT);
+	public void Position(Point pt) => mPos = pt;
+	public void Position(Win32.POINT pt) => mPos = .(pt.x, pt.y);
+	public void Position(int32 x, int32 y) => mPos = .(x, y);
+
+	public void Size(Size size) => mSize = size;
+	public void Size(Win32.SIZE size) => mPos = .(size.cx, size.cy);
+	public void Size(int32 width, int32 height) => mPos = .(width, height);
+
+	public void HasParent(Win32.HWND handle) => mParent = (.)handle;
+	public void HasParent(WindowHandle handle) => mParent = handle;
+
+	public void HasMenu(Win32.HMENU handle) => mMenu = (.)handle;
+	public void HasMenu(MenuHandle handle) => mMenu = handle;
+
+	public void ForCurrentModule() => mInstance = WindowClassBuilder.CurrentInstance;
+	public void ForModule(Win32.HINSTANCE moduleHandle) => mInstance = (.)moduleHandle;
+	public void ForModule(ModuleHandle moduleHandle) => mInstance = moduleHandle;
+
+	// TODO: mParam
 
 	public Result<WindowHandle> Create()
 	{
 		if (mInstance == 0)
-			mInstance = WindowClassBuilder.CurrentInstance;
+			ForCurrentModule();
 
 		let result = Win32.CreateWindowExW(mExStyle, (char16*)mClassName, mWindowName, mStyle, mPos.X, mPos.Y, mSize.Width, mSize.Height, (.)mParent, (.)mMenu, (.)mInstance, mParam);
 
 		if (result == 0)
 			return .Err;
 		return (WindowHandle)result;
+	}
+
+	[AllowDuplicates]
+	public enum WindowStyle : uint32
+	{
+		Overlapped = 0,
+		Popup = 2147483648,
+		Child = 1073741824,
+		Minimize = 536870912,
+		Visible = 268435456,
+		Disabled = 134217728,
+		ClipSiblings = 67108864,
+		ClipChildren = 33554432,
+		Maximize = 16777216,
+		Caption = 12582912,
+		Border = 8388608,
+		DialogFrame = 4194304,
+		VScroll = 2097152,
+		HScroll = 1048576,
+		SysMenu = 524288,
+		ThickFrame = 262144,
+		Group = 131072,
+		TabStop = 65536,
+		MinimizeBox = 131072,
+		MaximizeBox = 65536,
+		SizeBox = 262144,
+		OverlappedWindow = 13565952,
+		PopupWindow = 2156396544,
+		ActiveCaption = 1,
 	}
 }
