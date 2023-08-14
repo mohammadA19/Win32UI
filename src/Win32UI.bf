@@ -277,8 +277,8 @@ static
 
 public class WindowBuilder
 {
-	void* mClassName ~ if (IsNotAtom!(_)) delete _;
-	char16* mWindowName ~ delete _;
+	void* mClassName ~ if (_ != null && IsNotAtom!(_)) delete _;
+	char16* mWindowName ~ if (_ != null) delete _;
 	Win32.WINDOW_STYLE mStyle;
 	Win32.WINDOW_EX_STYLE mExStyle;
 	Point mPos;
@@ -297,6 +297,9 @@ public class WindowBuilder
 	{
 		0x0 >= i || i >= 0x10000
 	}
+
+	public void FromClass(uint16 classAtom) => mClassName = (void*)(int)classAtom;
+	public void FromClass(char16* classNamePtr) => mClassName = (.)classNamePtr;
 
 	public Result<WindowHandle> Create()
 	{
