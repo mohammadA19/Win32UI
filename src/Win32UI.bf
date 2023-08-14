@@ -274,3 +274,29 @@ static
 		return CreateWindow(className, windowName, style, exStyle, position.X, position.Y, size.Width, size.Height, parentWindow, menu, instance, param);
 	}
 }
+
+public class WindowBuilder
+{
+	void* mClassName;
+	char16* mWindowName;
+	Win32.WINDOW_STYLE mStyle;
+	Win32.WINDOW_EX_STYLE mExStyle;
+	Point mPos;
+	Size mSize;
+	WindowHandle mParent;
+	MenuHandle mMenu;
+	ModuleHandle mInstance;
+	void* mParam;
+
+	public Result<WindowHandle> Create()
+	{
+		if (mInstance == 0)
+			mInstance = WindowClassBuilder.CurrentInstance;
+
+		let result = Win32.CreateWindowExW(mExStyle, (char16*)mClassName, mWindowName, mStyle, mPos.X, mPos.Y, mSize.Width, mSize.Height, (.)mParent, (.)mMenu, (.)mInstance, mParam);
+
+		if (result == 0)
+			return .Err;
+		return (WindowHandle)result;
+	}
+}
