@@ -351,15 +351,15 @@ public class WindowBuilder
 
 	public void SetStyle(Win32.WINDOW_STYLE style) => mStyle = style;
 	public void AddStyle(Win32.WINDOW_STYLE style) => mStyle |= style;
-	public void RemoveStyle(Win32.WINDOW_STYLE style) => Enum.Exclude(mStyle, style);
+	public void RemoveStyle(Win32.WINDOW_STYLE style) => mStyle = Enum.Exclude(mStyle, style);
 
 	public void SetStyle(WindowStyle style) => mStyle = (.)style;
 	public void AddStyle(WindowStyle style) => mStyle |= (.)style;
-	public void RemoveStyle(WindowStyle style) => Enum.Exclude(mStyle, (.)style);
+	public void RemoveStyle(WindowStyle style) => mStyle = Enum.Exclude(mStyle, (.)style);
 
 	public void SetExStyle(Win32.WINDOW_EX_STYLE style) => mExStyle = style;
 	public void AddExStyle(Win32.WINDOW_EX_STYLE style) => mExStyle |= style;
-	public void RemoveExStyle(Win32.WINDOW_EX_STYLE style) => Enum.Exclude(mExStyle, style);
+	public void RemoveExStyle(Win32.WINDOW_EX_STYLE style) => mExStyle = Enum.Exclude(mExStyle, style);
 
 	public void UseDefaultPosition() => mPos = .(Win32.CW_USEDEFAULT, Win32.CW_USEDEFAULT);
 	public void Position(Point pt) => mPos = pt;
@@ -388,6 +388,122 @@ public class WindowBuilder
 			ForCurrentModule();
 
 		let result = Win32.CreateWindowExW(mExStyle, (char16*)mClassName, mWindowName, mStyle, mPos.X, mPos.Y, mSize.Width, mSize.Height, (.)mParent, (.)mMenu, (.)mInstance, mParam);
+
+		if (result == 0)
+			return .Err;
+		return (WindowHandle)result;
+	}
+
+	[AllowDuplicates]
+	public enum WindowStyle : uint32
+	{
+		Overlapped = 0,
+		Popup = 2147483648,
+		Child = 1073741824,
+		Minimize = 536870912,
+		Visible = 268435456,
+		Disabled = 134217728,
+		ClipSiblings = 67108864,
+		ClipChildren = 33554432,
+		Maximize = 16777216,
+		Caption = 12582912,
+		Border = 8388608,
+		DialogFrame = 4194304,
+		VScroll = 2097152,
+		HScroll = 1048576,
+		SysMenu = 524288,
+		ThickFrame = 262144,
+		Group = 131072,
+		TabStop = 65536,
+		MinimizeBox = 131072,
+		MaximizeBox = 65536,
+		SizeBox = 262144,
+		OverlappedWindow = 13565952,
+		PopupWindow = 2156396544,
+		ActiveCaption = 1,
+	}
+}
+
+public struct SlimWindowBuilder
+{
+	char16* mClassName;
+	// ^ this can be either a pointer to wchar or uint16 value (called atom).
+	char16* mWindowName;
+	Win32.WINDOW_STYLE mStyle;
+	Win32.WINDOW_EX_STYLE mExStyle;
+	Point mPos;
+	Size mSize;
+	WindowHandle mParent;
+	MenuHandle mMenu;
+	ModuleHandle mInstance;
+	void* mParam;
+
+	static bool IsAtom(char16* v)
+	{
+		let i = (int)(void*)v;
+		return 0x0 < i && i < 0x10000;
+	}
+
+	static bool IsNotAtom(char16* v)
+	{
+		return !IsAtom(v);
+	}
+
+	public void OfClass(uint16 classAtom) mut
+	{
+		mClassName = (char16*)(void*)(int)classAtom;
+	}
+
+	public void OfClass(char16* classNamePtr) mut
+	{
+		mClassName = (.)classNamePtr;
+	}
+
+	public void WithTitle(char16* strPtr) mut
+	{
+		mWindowName = strPtr;
+	}
+
+	public void SetStyle(Win32.WINDOW_STYLE style) mut => mStyle = style;
+	public void AddStyle(Win32.WINDOW_STYLE style) mut => mStyle |= style;
+	public void RemoveStyle(Win32.WINDOW_STYLE style) mut => mStyle = Enum.Exclude(mStyle, style);
+
+	public void SetStyle(WindowStyle style) mut => mStyle = (.)style;
+	public void AddStyle(WindowStyle style) mut => mStyle |= (.)style;
+	public void RemoveStyle(WindowStyle style) mut => mStyle = Enum.Exclude(mStyle, (.)style);
+
+	public void SetExStyle(Win32.WINDOW_EX_STYLE style) mut => mExStyle = style;
+	public void AddExStyle(Win32.WINDOW_EX_STYLE style) mut => mExStyle |= style;
+	public void RemoveExStyle(Win32.WINDOW_EX_STYLE style) mut => mExStyle = Enum.Exclude(mExStyle, style);
+
+	public void UseDefaultPosition() mut => mPos = .(Win32.CW_USEDEFAULT, Win32.CW_USEDEFAULT);
+	public void Position(Point pt) mut => mPos = pt;
+	public void Position(Win32.POINT pt) mut => mPos = .(pt.x, pt.y);
+	public void Position(int32 x, int32 y) mut => mPos = .(x, y);
+
+	public void Size(Size size) mut => mSize = size;
+	public void Size(Win32.SIZE size) mut => mPos = .(size.cx, size.cy);
+	public void Size(int32 width, int32 height) mut => mPos = .(width, height);
+
+	public void HasParent(Win32.HWND handle) mut => mParent = (.)handle;
+	public void HasParent(WindowHandle handle) mut => mParent = handle;
+
+	public void HasMenu(Win32.HMENU handle) mut => mMenu = (.)handle;
+	public void HasMenu(MenuHandle handle) mut => mMenu = handle;
+
+	public void ForCurrentModule() mut => mInstance = WindowClassBuilder.CurrentInstance;
+	public void ForModule(Win32.HINSTANCE moduleHandle) mut => mInstance = (.)moduleHandle;
+	public void ForModule(ModuleHandle moduleHandle) mut => mInstance = moduleHandle;
+
+	// TODO: mParam
+
+	public Result<WindowHandle> Create()
+	{
+		Win32.HINSTANCE instance = (.)mInstance;
+		if (instance == 0)
+			instance = (.)WindowClassBuilder.CurrentInstance;
+
+		let result = Win32.CreateWindowExW(mExStyle, (char16*)mClassName, mWindowName, mStyle, mPos.X, mPos.Y, mSize.Width, mSize.Height, (.)mParent, (.)mMenu, instance, mParam);
 
 		if (result == 0)
 			return .Err;
