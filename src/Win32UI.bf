@@ -355,3 +355,27 @@ public struct WindowBuilder
 
 	typealias WS_EX = WINDOW_EX_STYLE;
 }
+
+public class EventLoop
+{
+	bool mRunning = true;
+
+	public WPARAM Run()
+	{
+		Win32.MSG msg;
+		while (mRunning)
+		{
+			if (Win32.GetMessageW(&msg, 0, 0, 0) == 0)
+			{
+				mRunning = false;
+				break;
+			}
+
+			Win32.TranslateMessage(&msg);
+			Win32.DispatchMessageW(&msg);
+		}
+		return msg.wParam;
+	}
+
+	public void Stop() => mRunning = false;
+}

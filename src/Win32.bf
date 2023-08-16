@@ -3,6 +3,8 @@ using System;
 
 public static class Win32
 {
+	public typealias BOOL = int32;
+	public typealias BOOLEAN = uint8;
 	public typealias HANDLE = int;
 	public typealias HGDIOBJ = int;
 	public typealias HINSTANCE = int;
@@ -157,6 +159,18 @@ public static class Win32
 		IDCONTINUE = 11,
 		IDASYNC = 32001,
 		IDTIMEOUT = 32000,
+	}
+
+	[AllowDuplicates]
+	public enum PEEK_MESSAGE_REMOVE_TYPE : uint32
+	{
+		PM_NOREMOVE = 0,
+		PM_REMOVE = 1,
+		PM_NOYIELD = 2,
+		PM_QS_INPUT = 67567616,
+		PM_QS_POSTMESSAGE = 9961472,
+		PM_QS_PAINT = 2097152,
+		PM_QS_SENDMESSAGE = 4194304,
 	}
 
 	[AllowDuplicates]
@@ -3795,6 +3809,17 @@ public static class Win32
 	}
 
 	[CRepr]
+	public struct MSG
+	{
+		public HWND hwnd;
+		public uint32 message;
+		public WPARAM wParam;
+		public LPARAM lParam;
+		public uint32 time;
+		public POINT pt;
+	}
+
+	[CRepr]
 	public struct RECT
 	{
 		public int32 left;
@@ -3862,8 +3887,14 @@ public static class Win32
 	[Import("USER32.lib"), CLink, CallingConvention(.Stdcall)]
 	public static extern HWND CreateWindowExW(WINDOW_EX_STYLE dwExStyle, PWSTR lpClassName, PWSTR lpWindowName, WINDOW_STYLE dwStyle, int32 X, int32 Y, int32 nWidth, int32 nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, void* lpParam);
 
+	[Import("USER32.lib"), CLink, CallingConvention(.Stdcall)]
+	public static extern LRESULT DispatchMessageW(MSG* lpMsg);
+
 	[Import("KERNEL32.lib"), CLink, CallingConvention(.Stdcall)]
 	public static extern WIN32_ERROR GetLastError();
+
+	[Import("USER32.lib"), CLink, CallingConvention(.Stdcall)]
+	public static extern BOOL GetMessageW(MSG* lpMsg, HWND hWnd, uint32 wMsgFilterMin, uint32 wMsgFilterMax);
 
 	[Import("KERNEL32.lib"), CLink, CallingConvention(.Stdcall)]
 	public static extern HINSTANCE GetModuleHandleW(PWSTR lpModuleName);
@@ -3887,6 +3918,9 @@ public static class Win32
 	public static extern MESSAGEBOX_RESULT MessageBoxW(HWND hWnd, PWSTR lpText, PWSTR lpCaption, MESSAGEBOX_STYLE uType);
 
 	[Import("USER32.lib"), CLink, CallingConvention(.Stdcall)]
+	public static extern BOOL PeekMessageW(MSG* lpMsg, HWND hWnd, uint32 wMsgFilterMin, uint32 wMsgFilterMax, PEEK_MESSAGE_REMOVE_TYPE wRemoveMsg);
+
+	[Import("USER32.lib"), CLink, CallingConvention(.Stdcall)]
 	public static extern uint16 RegisterClassExW(WNDCLASSEXW* param0);
 
 	[Import("KERNEL32.lib"), CLink, CallingConvention(.Stdcall)]
@@ -3894,4 +3928,7 @@ public static class Win32
 
 	[Import("USER32.lib"), CLink, CallingConvention(.Stdcall)]
 	public static extern void SetLastErrorEx(WIN32_ERROR dwErrCode, uint32 dwType);
+
+	[Import("USER32.lib"), CLink, CallingConvention(.Stdcall)]
+	public static extern BOOL TranslateMessage(MSG* lpMsg);
 }
