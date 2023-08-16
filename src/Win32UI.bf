@@ -379,3 +379,12 @@ public class EventLoop
 
 	public void Stop() => mRunning = false;
 }
+
+static
+{
+	[CallingConvention(.Stdcall)]
+	public static LRESULT WindowProc(HWND param0, uint32 param1, WPARAM param2, LPARAM param3)
+	{
+		
+	}
+}
