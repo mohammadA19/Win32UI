@@ -435,8 +435,8 @@ public struct SlimWindowBuilder
 	char16* mClassName;
 	// ^ this can be either a pointer to wchar or uint16 value (called atom).
 	char16* mWindowName;
-	Win32.WINDOW_STYLE mStyle;
-	Win32.WINDOW_EX_STYLE mExStyle;
+	WINDOW_STYLE mStyle;
+	WINDOW_EX_STYLE mExStyle;
 	Point mPos;
 	Size mSize;
 	WindowHandle mParent;
@@ -449,13 +449,13 @@ public struct SlimWindowBuilder
 
 	public void WithTitle(char16* strPtr) mut => mWindowName = strPtr;
 
-	public void SetStyle(WindowStyle style) mut => mStyle = (.)style;
-	public void AddStyle(WindowStyle style) mut => mStyle |= (.)style;
-	public void RemoveStyle(WindowStyle style) mut => mStyle = Enum.Exclude(mStyle, (.)style);
+	public void SetStyle(WINDOW_STYLE style) mut => mStyle = style;
+	public void AddStyle(WINDOW_STYLE style) mut => mStyle |= style;
+	public void RemoveStyle(WINDOW_STYLE style) mut => mStyle = Enum.Exclude(mStyle, style);
 
-	public void SetExStyle(Win32.WINDOW_EX_STYLE style) mut => mExStyle = style;
-	public void AddExStyle(Win32.WINDOW_EX_STYLE style) mut => mExStyle |= style;
-	public void RemoveExStyle(Win32.WINDOW_EX_STYLE style) mut => mExStyle = Enum.Exclude(mExStyle, style);
+	public void SetExStyle(WINDOW_EX_STYLE style) mut => mExStyle = style;
+	public void AddExStyle(WINDOW_EX_STYLE style) mut => mExStyle |= style;
+	public void RemoveExStyle(WINDOW_EX_STYLE style) mut => mExStyle = Enum.Exclude(mExStyle, style);
 
 	public void UseDefaultPosition() mut => mPos = .(Win32.CW_USEDEFAULT, Win32.CW_USEDEFAULT);
 	public void Position(Point pt) mut => mPos = pt;
@@ -471,7 +471,9 @@ public struct SlimWindowBuilder
 	public void ForCurrentModule() mut => mInstance = WindowClassBuilder.CurrentInstance;
 	public void ForModule(ModuleHandle moduleHandle) mut => mInstance = moduleHandle;
 
-	// TODO: mParam
+	public void SetParam(void* param) mut => mParam = param;
+	public void SetParam(Object obj) mut => mParam = Internal.UnsafeCastToPtr(obj);
+	public void SetParam(int value) mut => mParam = (void*)value;
 
 	public Result<WindowHandle> Create()
 	{
@@ -479,7 +481,7 @@ public struct SlimWindowBuilder
 		if (instance == 0)
 			instance = (.)WindowClassBuilder.CurrentInstance;
 
-		let result = Win32.CreateWindowExW(mExStyle, (char16*)mClassName, mWindowName, mStyle, mPos.X, mPos.Y, mSize.Width, mSize.Height, (.)mParent, (.)mMenu, instance, mParam);
+		let result = Win32.CreateWindowExW((.)mExStyle, (char16*)mClassName, mWindowName, (.)mStyle, mPos.X, mPos.Y, mSize.Width, mSize.Height, (.)mParent, (.)mMenu, instance, mParam);
 
 		if (result == 0)
 			return .Err;
@@ -487,31 +489,71 @@ public struct SlimWindowBuilder
 	}
 
 	[AllowDuplicates]
-	public enum WindowStyle : uint32
+	public enum WINDOW_STYLE : uint32
 	{
-		Overlapped = 0,
-		Popup = 2147483648,
-		Child = 1073741824,
-		Minimize = 536870912,
-		Visible = 268435456,
-		Disabled = 134217728,
-		ClipSiblings = 67108864,
-		ClipChildren = 33554432,
-		Maximize = 16777216,
-		Caption = 12582912,
-		Border = 8388608,
-		DialogFrame = 4194304,
-		VScroll = 2097152,
-		HScroll = 1048576,
-		SysMenu = 524288,
-		ThickFrame = 262144,
-		Group = 131072,
-		TabStop = 65536,
-		MinimizeBox = 131072,
-		MaximizeBox = 65536,
-		SizeBox = 262144,
-		OverlappedWindow = 13565952,
-		PopupWindow = 2156396544,
-		ActiveCaption = 1,
+		OVERLAPPED = 0,
+		POPUP = 2147483648,
+		CHILD = 1073741824,
+		MINIMIZE = 536870912,
+		VISIBLE = 268435456,
+		DISABLED = 134217728,
+		CLIPSIBLINGS = 67108864,
+		CLIPCHILDREN = 33554432,
+		MAXIMIZE = 16777216,
+		CAPTION = 12582912,
+		BORDER = 8388608,
+		DLGFRAME = 4194304,
+		VSCROLL = 2097152,
+		HSCROLL = 1048576,
+		SYSMENU = 524288,
+		THICKFRAME = 262144,
+		GROUP = 131072,
+		TABSTOP = 65536,
+		MINIMIZEBOX = 131072,
+		MAXIMIZEBOX = 65536,
+		TILED = 0,
+		ICONIC = 536870912,
+		SIZEBOX = 262144,
+		TILEDWINDOW = 13565952,
+		OVERLAPPEDWINDOW = 13565952,
+		POPUPWINDOW = 2156396544,
+		CHILDWINDOW = 1073741824,
+		ACTIVECAPTION = 1,
 	}
+
+	typealias WS = WINDOW_STYLE;
+
+	[AllowDuplicates]
+	public enum WINDOW_EX_STYLE : uint32
+	{
+		DLGMODALFRAME = 1,
+		NOPARENTNOTIFY = 4,
+		TOPMOST = 8,
+		ACCEPTFILES = 16,
+		TRANSPARENT = 32,
+		MDICHILD = 64,
+		TOOLWINDOW = 128,
+		WINDOWEDGE = 256,
+		CLIENTEDGE = 512,
+		CONTEXTHELP = 1024,
+		RIGHT = 4096,
+		LEFT = 0,
+		RTLREADING = 8192,
+		LTRREADING = 0,
+		LEFTSCROLLBAR = 16384,
+		RIGHTSCROLLBAR = 0,
+		CONTROLPARENT = 65536,
+		STATICEDGE = 131072,
+		APPWINDOW = 262144,
+		OVERLAPPEDWINDOW = 768,
+		PALETTEWINDOW = 392,
+		LAYERED = 524288,
+		NOINHERITLAYOUT = 1048576,
+		NOREDIRECTIONBITMAP = 2097152,
+		LAYOUTRTL = 4194304,
+		COMPOSITED = 33554432,
+		NOACTIVATE = 134217728,
+	}
+
+	typealias WS_EX = WINDOW_EX_STYLE;
 }
