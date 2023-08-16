@@ -217,6 +217,9 @@ public struct Point
 		get     => m.y;
 		set mut => m.y = value;
 	}
+
+	public static explicit operator POINT(Self val) => val.m;
+	public static explicit operator Self(POINT val) => .(val.x, val.y);
 }
 
 [CRepr]
@@ -236,6 +239,9 @@ public struct Size : Win32.SIZE
 		get     => m.cy;
 		set mut => m.cy = value;
 	}
+
+	public static explicit operator SIZE(Self val) => val.m;
+	public static explicit operator Self(SIZE val) => .(val.cx, val.cy);
 }
 
 public struct WindowHandle : Win32.HWND;
@@ -438,35 +444,10 @@ public struct SlimWindowBuilder
 	ModuleHandle mInstance;
 	void* mParam;
 
-	static bool IsAtom(char16* v)
-	{
-		let i = (int)(void*)v;
-		return 0x0 < i && i < 0x10000;
-	}
+	public void OfClass(uint16 classAtom) mut =>     mClassName = (char16*)(void*)(int)classAtom;
+	public void OfClass(char16* classNamePtr) mut => mClassName = (.)classNamePtr;
 
-	static bool IsNotAtom(char16* v)
-	{
-		return !IsAtom(v);
-	}
-
-	public void OfClass(uint16 classAtom) mut
-	{
-		mClassName = (char16*)(void*)(int)classAtom;
-	}
-
-	public void OfClass(char16* classNamePtr) mut
-	{
-		mClassName = (.)classNamePtr;
-	}
-
-	public void WithTitle(char16* strPtr) mut
-	{
-		mWindowName = strPtr;
-	}
-
-	public void SetStyle(Win32.WINDOW_STYLE style) mut => mStyle = style;
-	public void AddStyle(Win32.WINDOW_STYLE style) mut => mStyle |= style;
-	public void RemoveStyle(Win32.WINDOW_STYLE style) mut => mStyle = Enum.Exclude(mStyle, style);
+	public void WithTitle(char16* strPtr) mut => mWindowName = strPtr;
 
 	public void SetStyle(WindowStyle style) mut => mStyle = (.)style;
 	public void AddStyle(WindowStyle style) mut => mStyle |= (.)style;
@@ -478,21 +459,16 @@ public struct SlimWindowBuilder
 
 	public void UseDefaultPosition() mut => mPos = .(Win32.CW_USEDEFAULT, Win32.CW_USEDEFAULT);
 	public void Position(Point pt) mut => mPos = pt;
-	public void Position(Win32.POINT pt) mut => mPos = .(pt.x, pt.y);
 	public void Position(int32 x, int32 y) mut => mPos = .(x, y);
 
 	public void Size(Size size) mut => mSize = size;
-	public void Size(Win32.SIZE size) mut => mPos = .(size.cx, size.cy);
 	public void Size(int32 width, int32 height) mut => mPos = .(width, height);
 
-	public void HasParent(Win32.HWND handle) mut => mParent = (.)handle;
 	public void HasParent(WindowHandle handle) mut => mParent = handle;
 
-	public void HasMenu(Win32.HMENU handle) mut => mMenu = (.)handle;
 	public void HasMenu(MenuHandle handle) mut => mMenu = handle;
 
 	public void ForCurrentModule() mut => mInstance = WindowClassBuilder.CurrentInstance;
-	public void ForModule(Win32.HINSTANCE moduleHandle) mut => mInstance = (.)moduleHandle;
 	public void ForModule(ModuleHandle moduleHandle) mut => mInstance = moduleHandle;
 
 	// TODO: mParam
