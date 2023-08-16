@@ -203,44 +203,24 @@ public class WindowClassBuilder
 [CRepr]
 public struct Point
 {
-	Win32.POINT m;
-	public this(int32 x = 0, int32 y = 0) => (m.x, m.y) = (x, y);
+	public this(int32 x = 0, int32 y = 0) => (X, Y) = (x, y);
 
-	public int32 X
-	{
-		get     => m.x;
-		set mut => m.x = value;
-	}
+	public int32 X { get; set mut; }
+	public int32 Y { get; set mut; }
 
-	public int32 Y
-	{
-		get     => m.y;
-		set mut => m.y = value;
-	}
-
-	public static explicit operator POINT(Self val) => val.m;
+	public static explicit operator POINT(Self val) => .() { x = val.X, y = val.Y};
 	public static explicit operator Self(POINT val) => .(val.x, val.y);
 }
 
 [CRepr]
-public struct Size : Win32.SIZE
+public struct Size
 {
-	Win32.SIZE m;
-	public this(int32 width = 0, int32 height = 0) => (m.cx, m.cy) = (width, height);
+	public this(i nt32 width = 0, int32 height = 0) => (Width, Height) = (width, height);
 
-	public int32 Width
-	{
-		get     => m.cx;
-		set mut => m.cx = value;
-	}
+	public int32 Width { get; set mut; }
+	public int32 Height { get; set mut; }
 
-	public int32 Height
-	{
-		get     => m.cy;
-		set mut => m.cy = value;
-	}
-
-	public static explicit operator SIZE(Self val) => val.m;
+	public static explicit operator SIZE(Self val) => .() { cx = Width, cy = Height };
 	public static explicit operator Self(SIZE val) => .(val.cx, val.cy);
 }
 
