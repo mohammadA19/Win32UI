@@ -396,9 +396,11 @@ public struct ConstructionParams : this(
 	WINDOW_EX_STYLE ExStyle,
 	Point Position,
 	Size Size,
-	WindowHandle Parent,
-	MenuHandle Menu,
+	WindowHandle Parent = 0,
+	MenuHandle Menu = 0,
 );
+
+public const ConstructionParams ButtonParams = .("BUTTON", "Button", WS.VISIBLE | WS.CHILD, 0, .(Win32.CW_USEDEFAULT, Win32.CW_USEDEFAULT), .(300, 25));
 
 static
 {
