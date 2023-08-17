@@ -285,75 +285,6 @@ public struct WindowBuilder
 			return .Err;
 		return (WindowHandle)result;
 	}
-
-	[AllowDuplicates]
-	public enum WINDOW_STYLE : uint32
-	{
-		OVERLAPPED = 0,
-		POPUP = 2147483648,
-		CHILD = 1073741824,
-		MINIMIZE = 536870912,
-		VISIBLE = 268435456,
-		DISABLED = 134217728,
-		CLIPSIBLINGS = 67108864,
-		CLIPCHILDREN = 33554432,
-		MAXIMIZE = 16777216,
-		CAPTION = 12582912,
-		BORDER = 8388608,
-		DLGFRAME = 4194304,
-		VSCROLL = 2097152,
-		HSCROLL = 1048576,
-		SYSMENU = 524288,
-		THICKFRAME = 262144,
-		GROUP = 131072,
-		TABSTOP = 65536,
-		MINIMIZEBOX = 131072,
-		MAXIMIZEBOX = 65536,
-		TILED = 0,
-		ICONIC = 536870912,
-		SIZEBOX = 262144,
-		TILEDWINDOW = 13565952,
-		OVERLAPPEDWINDOW = 13565952,
-		POPUPWINDOW = 2156396544,
-		CHILDWINDOW = 1073741824,
-		ACTIVECAPTION = 1,
-	}
-
-	typealias WS = WINDOW_STYLE;
-
-	[AllowDuplicates]
-	public enum WINDOW_EX_STYLE : uint32
-	{
-		DLGMODALFRAME = 1,
-		NOPARENTNOTIFY = 4,
-		TOPMOST = 8,
-		ACCEPTFILES = 16,
-		TRANSPARENT = 32,
-		MDICHILD = 64,
-		TOOLWINDOW = 128,
-		WINDOWEDGE = 256,
-		CLIENTEDGE = 512,
-		CONTEXTHELP = 1024,
-		RIGHT = 4096,
-		LEFT = 0,
-		RTLREADING = 8192,
-		LTRREADING = 0,
-		LEFTSCROLLBAR = 16384,
-		RIGHTSCROLLBAR = 0,
-		CONTROLPARENT = 65536,
-		STATICEDGE = 131072,
-		APPWINDOW = 262144,
-		OVERLAPPEDWINDOW = 768,
-		PALETTEWINDOW = 392,
-		LAYERED = 524288,
-		NOINHERITLAYOUT = 1048576,
-		NOREDIRECTIONBITMAP = 2097152,
-		LAYOUTRTL = 4194304,
-		COMPOSITED = 33554432,
-		NOACTIVATE = 134217728,
-	}
-
-	typealias WS_EX = WINDOW_EX_STYLE;
 }
 
 public class EventLoop
@@ -386,5 +317,102 @@ static
 	public static LRESULT WindowProc(HWND param0, uint32 param1, WPARAM param2, LPARAM param3)
 	{
 		
+	}
+}
+
+[AllowDuplicates]
+public enum WINDOW_STYLE : uint32
+{
+	OVERLAPPED = 0,
+	POPUP = 2147483648,
+	CHILD = 1073741824,
+	MINIMIZE = 536870912,
+	VISIBLE = 268435456,
+	DISABLED = 134217728,
+	CLIPSIBLINGS = 67108864,
+	CLIPCHILDREN = 33554432,
+	MAXIMIZE = 16777216,
+	CAPTION = 12582912,
+	BORDER = 8388608,
+	DLGFRAME = 4194304,
+	VSCROLL = 2097152,
+	HSCROLL = 1048576,
+	SYSMENU = 524288,
+	THICKFRAME = 262144,
+	GROUP = 131072,
+	TABSTOP = 65536,
+	MINIMIZEBOX = 131072,
+	MAXIMIZEBOX = 65536,
+	TILED = 0,
+	ICONIC = 536870912,
+	SIZEBOX = 262144,
+	TILEDWINDOW = 13565952,
+	OVERLAPPEDWINDOW = 13565952,
+	POPUPWINDOW = 2156396544,
+	CHILDWINDOW = 1073741824,
+	ACTIVECAPTION = 1,
+}
+
+public typealias WS = WINDOW_STYLE;
+
+[AllowDuplicates]
+public enum WINDOW_EX_STYLE : uint32
+{
+	DLGMODALFRAME = 1,
+	NOPARENTNOTIFY = 4,
+	TOPMOST = 8,
+	ACCEPTFILES = 16,
+	TRANSPARENT = 32,
+	MDICHILD = 64,
+	TOOLWINDOW = 128,
+	WINDOWEDGE = 256,
+	CLIENTEDGE = 512,
+	CONTEXTHELP = 1024,
+	RIGHT = 4096,
+	LEFT = 0,
+	RTLREADING = 8192,
+	LTRREADING = 0,
+	LEFTSCROLLBAR = 16384,
+	RIGHTSCROLLBAR = 0,
+	CONTROLPARENT = 65536,
+	STATICEDGE = 131072,
+	APPWINDOW = 262144,
+	OVERLAPPEDWINDOW = 768,
+	PALETTEWINDOW = 392,
+	LAYERED = 524288,
+	NOINHERITLAYOUT = 1048576,
+	NOREDIRECTIONBITMAP = 2097152,
+	LAYOUTRTL = 4194304,
+	COMPOSITED = 33554432,
+	NOACTIVATE = 134217728,
+}
+
+public typealias WS_EX = WINDOW_EX_STYLE;
+
+public struct ConstructionParams : this(
+	String WindowName,
+	WINDOW_STYLE Style,
+	WINDOW_EX_STYLE ExStyle,
+	Point Position,
+	Size Size,
+	WindowHandle Parent,
+	MenuHandle Menu,
+);
+
+static
+{
+	public static Result<WindowHandle> CreateWindow(String className, ConstructionParams cParams, String windowName = null, WINDOW_STYLE? style = null,
+		WINDOW_EX_STYLE? exStyle = null, Point? position = null, Size? size = null, WindowHandle? parent = null, MenuHandle? menu = null)
+	{
+		let pos = position ?? cParams.Position;
+		let sz = size ?? cParams.Size;
+
+		let result = Win32.CreateWindowExW((.)(exStyle ?? cParams.ExStyle), className.ToScopedNativeWChar!(), (windowName ?? cParams.WindowName).ToScopedNativeWChar!(), 
+			(.)(style ?? cParams.Style), pos.X, pos.Y, sz.Width, sz.Height, (.)(parent ?? cParams.Parent), (.)(menu ?? cParams.Menu), 
+			WindowClassBuilder.CurrentInstance, null);
+
+		if (result == 0)
+			return .Err;
+		return (WindowHandle)result;
 	}
 }
