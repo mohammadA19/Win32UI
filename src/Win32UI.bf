@@ -400,10 +400,10 @@ public struct ConstructionParams : this(
 	MenuHandle Menu = 0,
 );
 
-public const ConstructionParams ButtonParams = .("BUTTON", "Button", WS.VISIBLE | WS.CHILD, 0, .(Win32.CW_USEDEFAULT, Win32.CW_USEDEFAULT), .(300, 25));
-
 static
 {
+	public const ConstructionParams ButtonParams = .("BUTTON", "Button", WS.VISIBLE | WS.CHILD, 0, .(Win32.CW_USEDEFAULT, Win32.CW_USEDEFAULT), .(300, 25));
+
 	public static Result<WindowHandle> CreateWindow(ConstructionParams cParams, String className = null, String windowName = null, WINDOW_STYLE? style = null,
 		WINDOW_EX_STYLE? exStyle = null, Point? position = null, Size? size = null, WindowHandle? parent = null, MenuHandle? menu = null)
 	{
