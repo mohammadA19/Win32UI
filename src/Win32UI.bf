@@ -407,7 +407,7 @@ static
 	public static Result<WindowHandle> CreateWindow(ConstructionParams cParams, String className = null, String windowName = null, WINDOW_STYLE? style = null,
 		WINDOW_EX_STYLE? exStyle = null, Point? position = null, Size? size = null, WindowHandle? parent = null, MenuHandle? menu = null)
 	{
-		Debug.Assert(cParams != null, scope $"Argument '{nameof(cParams)}' must not be null");
+		// Debug.Assert(cParams != null, scope $"Argument '{nameof(cParams)}' must not be null");
 		let pos = position ?? cParams.Position;
 		let sz = size ?? cParams.Size;
 
