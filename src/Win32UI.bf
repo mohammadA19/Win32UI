@@ -390,6 +390,7 @@ public enum WINDOW_EX_STYLE : uint32
 public typealias WS_EX = WINDOW_EX_STYLE;
 
 public struct ConstructionParams : this(
+	String ClassName,
 	String WindowName,
 	WINDOW_STYLE Style,
 	WINDOW_EX_STYLE ExStyle,
@@ -401,15 +402,16 @@ public struct ConstructionParams : this(
 
 static
 {
-	public static Result<WindowHandle> CreateWindow(String className, ConstructionParams cParams, String windowName = null, WINDOW_STYLE? style = null,
+	public static Result<WindowHandle> CreateWindow(ConstructionParams cParams, String className = null, String windowName = null, WINDOW_STYLE? style = null,
 		WINDOW_EX_STYLE? exStyle = null, Point? position = null, Size? size = null, WindowHandle? parent = null, MenuHandle? menu = null)
 	{
+		Debug.Assert(cParams != null, scope $"Argument '{nameof(cParams)}' must not be null");
 		let pos = position ?? cParams.Position;
 		let sz = size ?? cParams.Size;
 
-		let result = Win32.CreateWindowExW((.)(exStyle ?? cParams.ExStyle), className.ToScopedNativeWChar!(), (windowName ?? cParams.WindowName).ToScopedNativeWChar!(), 
-			(.)(style ?? cParams.Style), pos.X, pos.Y, sz.Width, sz.Height, (.)(parent ?? cParams.Parent), (.)(menu ?? cParams.Menu), 
-			WindowClassBuilder.CurrentInstance, null);
+		let result = Win32.CreateWindowExW((.)(exStyle ?? cParams.ExStyle), (className ?? cParams.ClassName).ToScopedNativeWChar!(), 
+			(windowName ?? cParams.WindowName).ToScopedNativeWChar!(),  (.)(style ?? cParams.Style), 
+			pos.X, pos.Y, sz.Width, sz.Height, (.)(parent ?? cParams.Parent), (.)(menu ?? cParams.Menu),  WindowClassBuilder.CurrentInstance, null);
 
 		if (result == 0)
 			return .Err;
