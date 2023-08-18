@@ -24,8 +24,8 @@ public class WindowClassBuilder
 	[AllowAppend]
 	public this(String className)
 	{
-		if (className == null)
-			return;
+		// if (className == null)
+			// return;
 
 		int encodedLen = UTF16.GetEncodedLen(className);
 		char16* _append1 = append char16[encodedLen+1]* (?);

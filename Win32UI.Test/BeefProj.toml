@@ -3,4 +3,5 @@ Dependencies = {corlib = "*", Win32UI = "*"}
 
 [Project]
 Name = "Win32UI.Test"
+TargetType = "BeefGUIApplication"
 StartupObject = "Win32UI.Test.Program"
