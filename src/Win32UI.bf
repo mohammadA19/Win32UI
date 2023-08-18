@@ -208,20 +208,20 @@ public struct Point
 	public int32 X { get; set mut; }
 	public int32 Y { get; set mut; }
 
-	public static explicit operator POINT(Self val) => .() { x = val.X, y = val.Y};
-	public static explicit operator Self(POINT val) => .(val.x, val.y);
+	public static explicit operator Win32.POINT(Self val) => .() { x = val.X, y = val.Y};
+	public static explicit operator Self(Win32.POINT val) => .(val.x, val.y);
 }
 
 [CRepr]
 public struct Size
 {
-	public this(i nt32 width = 0, int32 height = 0) => (Width, Height) = (width, height);
+	public this(int32 width = 0, int32 height = 0) => (Width, Height) = (width, height);
 
 	public int32 Width { get; set mut; }
 	public int32 Height { get; set mut; }
 
-	public static explicit operator SIZE(Self val) => .() { cx = Width, cy = Height };
-	public static explicit operator Self(SIZE val) => .(val.cx, val.cy);
+	public static explicit operator Win32.SIZE(Self val) => .() { cx = val.Width, cy = val.Height };
+	public static explicit operator Self(Win32.SIZE val) => .(val.cx, val.cy);
 }
 
 public struct WindowHandle : Win32.HWND;
@@ -291,9 +291,9 @@ public class EventLoop
 {
 	bool mRunning = true;
 
-	public WPARAM Run()
+	public Win32.WPARAM Run()
 	{
-		Win32.MSG msg;
+		Win32.MSG msg = default;
 		while (mRunning)
 		{
 			if (Win32.GetMessageW(&msg, 0, 0, 0) == 0)
@@ -314,9 +314,17 @@ public class EventLoop
 static
 {
 	[CallingConvention(.Stdcall)]
-	public static LRESULT WindowProc(HWND param0, uint32 param1, WPARAM param2, LPARAM param3)
+	public static Win32.LRESULT WindowProc(Win32.HWND param0, uint32 param1, Win32.WPARAM param2, Win32.LPARAM param3)
 	{
-		
+		switch (param1)
+		{
+		case Win32.WM_CLOSE:
+			Win32.PostQuitMessage(0);
+		default:
+			// Do nothing
+		}
+
+		return Win32.DefWindowProcW(param0, param1, param2, param3);
 	}
 }
 
@@ -397,12 +405,12 @@ public struct ConstructionParams : this(
 	Point Position,
 	Size Size,
 	WindowHandle Parent = 0,
-	MenuHandle Menu = 0,
-);
+	MenuHandle Menu = 0);
 
 static
 {
-	public const ConstructionParams ButtonParams = .("BUTTON", "Button", WS.VISIBLE | WS.CHILD, 0, .(Win32.CW_USEDEFAULT, Win32.CW_USEDEFAULT), .(300, 25));
+	const Point DefaultPosition = .(Win32.CW_USEDEFAULT, Win32.CW_USEDEFAULT);
+	public const ConstructionParams ButtonParams = .("BUTTON", "Button", WS.VISIBLE | WS.CHILD, 0, DefaultPosition, .(300, 25));
 
 	public static Result<WindowHandle> CreateWindow(ConstructionParams cParams, String className = null, String windowName = null, WINDOW_STYLE? style = null,
 		WINDOW_EX_STYLE? exStyle = null, Point? position = null, Size? size = null, WindowHandle? parent = null, MenuHandle? menu = null)
@@ -413,7 +421,7 @@ static
 
 		let result = Win32.CreateWindowExW((.)(exStyle ?? cParams.ExStyle), (className ?? cParams.ClassName).ToScopedNativeWChar!(), 
 			(windowName ?? cParams.WindowName).ToScopedNativeWChar!(),  (.)(style ?? cParams.Style), 
-			pos.X, pos.Y, sz.Width, sz.Height, (.)(parent ?? cParams.Parent), (.)(menu ?? cParams.Menu),  WindowClassBuilder.CurrentInstance, null);
+			pos.X, pos.Y, sz.Width, sz.Height, (.)(parent ?? cParams.Parent), (.)(menu ?? cParams.Menu), (.)WindowClassBuilder.CurrentInstance, null);
 
 		if (result == 0)
 			return .Err;
