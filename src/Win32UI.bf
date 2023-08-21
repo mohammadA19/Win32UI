@@ -1,3 +1,4 @@
+
 namespace Win32UI;
 using System;
 using System.Text;
@@ -8,6 +9,67 @@ public struct WindowClassBuilderParams
 {
 	Win32.WNDCLASSEXW mWndClass = .() { cbSize = sizeof(Win32.WNDCLASSEXW) };
 	String mClassName, mMenuName;
+}
+
+static
+{
+	static T NotZero<T>(T value, T valueIfZero)
+	{
+		return value != default ? value : valueIfZero;
+	}
+
+	static Win32.WNDCLASSEXW PrepareWndClassExW(
+		BrushHandle backgroundBrush = 0,
+		CursorHandle cursor = 0,
+		IconHandle smallIcon = 0,
+		IconHandle icon = 0,
+		ModuleHandle module = 0,
+		Win32.WNDPROC windowProc = null,
+		Win32.WNDCLASS_STYLES style = 0,
+		int32 extraClassBytes = 0,
+		int32 extraWindowBytes = 0
+		)
+	{
+		Win32.WNDCLASSEXW result = default;
+
+		result.cbSize = sizeof(Win32.WNDCLASSEXW);
+		result.cbClsExtra = extraClassBytes;
+		result.cbWndExtra = extraWindowBytes;
+		result.hbrBackground = NotZero((Win32.HBRUSH)backgroundBrush, Win32.GetStockObject(.WHITE_BRUSH));
+		result.hCursor = NotZero((Win32.HCURSOR)cursor, Win32.LoadCursorW(0, Win32.IDC_ARROW));
+		result.hIconSm = NotZero((Win32.HICON)smallIcon, Win32.LoadImageW((Win32.HINSTANCE)WindowClassBuilder.CurrentInstance, (.)(void*)5, .IMAGE_ICON, Win32.GetSystemMetrics(.SM_CXSMICON), Win32.GetSystemMetrics(.SM_CYSMICON), .LR_DEFAULTCOLOR));
+		result.hIcon = NotZero((Win32.HICON)icon, Win32.LoadIconW(0, Win32.IDI_APPLICATION));
+		result.hInstance = (.)NotZero(module, WindowClassBuilder.CurrentInstance);
+		result.lpfnWndProc = windowProc ?? => WindowProc;
+		// result.lpszClassName = ...;
+		// result.lpszMenuName = ...;
+		result.style = NotZero(style, 0); // TODO
+
+		return result;
+	}
+
+	public static Result<void> RegisterWindowClass(
+		String windowClassName,
+		String menuName = null,
+		BrushHandle backgroundBrush = 0,
+		CursorHandle cursor = 0,
+		IconHandle smallIcon = 0,
+		IconHandle icon = 0,
+		ModuleHandle module = 0,
+		Win32.WNDPROC windowProc = null,
+		Win32.WNDCLASS_STYLES style = 0,
+		int32 extraClassBytes = 0,
+		int32 extraWindowBytes = 0
+		)
+	{
+		Debug.Assert(windowClassName != null);
+		var wc = PrepareWndClassExW(backgroundBrush, cursor, smallIcon, icon, module, windowProc, style, extraClassBytes, extraClassBytes);
+
+		wc.lpszClassName = windowClassName.ToScopedNativeWChar!();
+		wc.lpszMenuName = menuName?.ToScopedNativeWChar!();
+
+		return Win32.RegisterClassExW(&wc) != 0 ? .Ok : .Err;
+	}
 }
 
 public class WindowClassBuilder
@@ -236,6 +298,9 @@ public struct Size
 public struct WindowHandle : Win32.HWND;
 public struct MenuHandle : Win32.HMENU;
 public struct ModuleHandle : Win32.HINSTANCE;
+public struct BrushHandle : Win32.HBRUSH;
+public struct IconHandle : Win32.HICON;
+public struct CursorHandle : Win32.HCURSOR;
 
 public class EventLoop
 {
