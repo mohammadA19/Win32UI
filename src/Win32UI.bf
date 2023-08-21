@@ -75,7 +75,7 @@ public class WindowClassBuilder
 			mStruct.hIconSm = Win32.LoadImageW((Win32.HINSTANCE)CurrentInstance, (.)(void*)5, .IMAGE_ICON, Win32.GetSystemMetrics(.SM_CXSMICON), Win32.GetSystemMetrics(.SM_CYSMICON), .LR_DEFAULTCOLOR);
 
 		if (mStruct.lpfnWndProc == null)
-			mSize.lpfnWndProc = => WindowProc;
+			mStruct.lpfnWndProc = => WindowProc;
 	}
 
 	public void UseStyle(Win32.WNDCLASS_STYLES style)
