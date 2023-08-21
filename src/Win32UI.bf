@@ -4,6 +4,12 @@ using System.Text;
 using System.Interop;
 using System.Diagnostics;
 
+public struct WindowClassBuilderParams
+{
+	Win32.WNDCLASSEXW mWndClass = .() { cbSize = sizeof(Win32.WNDCLASSEXW) };
+	String mClassName, mMenuName;
+}
+
 public class WindowClassBuilder
 {
 	Win32.WNDCLASSEXW mStruct;
@@ -67,6 +73,9 @@ public class WindowClassBuilder
 
 		if (mStruct.hIconSm == 0)
 			mStruct.hIconSm = Win32.LoadImageW((Win32.HINSTANCE)CurrentInstance, (.)(void*)5, .IMAGE_ICON, Win32.GetSystemMetrics(.SM_CXSMICON), Win32.GetSystemMetrics(.SM_CYSMICON), .LR_DEFAULTCOLOR);
+
+		if (mStruct.lpfnWndProc == null)
+			mSize.lpfnWndProc = => WindowProc;
 	}
 
 	public void UseStyle(Win32.WNDCLASS_STYLES style)
@@ -227,65 +236,6 @@ public struct Size
 public struct WindowHandle : Win32.HWND;
 public struct MenuHandle : Win32.HMENU;
 public struct ModuleHandle : Win32.HINSTANCE;
-
-public struct WindowBuilder
-{
-	char16* mClassName;
-	// ^ this can be either a pointer to wchar or uint16 value (called atom).
-	char16* mWindowName;
-	WINDOW_STYLE mStyle;
-	WINDOW_EX_STYLE mExStyle;
-	Point mPos;
-	Size mSize;
-	WindowHandle mParent;
-	MenuHandle mMenu;
-	ModuleHandle mInstance;
-	void* mParam;
-
-	public void OfClass(uint16 classAtom) mut =>     mClassName = (char16*)(void*)(int)classAtom;
-	public void OfClass(char16* classNamePtr) mut => mClassName = (.)classNamePtr;
-
-	public void WithTitle(char16* strPtr) mut => mWindowName = strPtr;
-
-	public void SetStyle(WINDOW_STYLE style) mut => mStyle = style;
-	public void AddStyle(WINDOW_STYLE style) mut => mStyle |= style;
-	public void RemoveStyle(WINDOW_STYLE style) mut => mStyle = Enum.Exclude(mStyle, style);
-
-	public void SetExStyle(WINDOW_EX_STYLE style) mut => mExStyle = style;
-	public void AddExStyle(WINDOW_EX_STYLE style) mut => mExStyle |= style;
-	public void RemoveExStyle(WINDOW_EX_STYLE style) mut => mExStyle = Enum.Exclude(mExStyle, style);
-
-	public void UseDefaultPosition() mut => mPos = .(Win32.CW_USEDEFAULT, Win32.CW_USEDEFAULT);
-	public void Position(Point pt) mut => mPos = pt;
-	public void Position(int32 x, int32 y) mut => mPos = .(x, y);
-
-	public void Size(Size size) mut => mSize = size;
-	public void Size(int32 width, int32 height) mut => mPos = .(width, height);
-
-	public void HasParent(WindowHandle handle) mut => mParent = handle;
-
-	public void HasMenu(MenuHandle handle) mut => mMenu = handle;
-
-	public void ForCurrentModule() mut => mInstance = WindowClassBuilder.CurrentInstance;
-	public void ForModule(ModuleHandle moduleHandle) mut => mInstance = moduleHandle;
-
-	public void SetParam(void* param) mut => mParam = param;
-	public void SetParam(Object obj) mut => mParam = Internal.UnsafeCastToPtr(obj);
-	public void SetParam(int value) mut => mParam = (void*)value;
-
-	public Result<WindowHandle> Create()
-	{
-		Win32.HINSTANCE instance = (.)mInstance;
-		if (instance == 0)
-			instance = (.)WindowClassBuilder.CurrentInstance;
-
-		let result = Win32.CreateWindowExW((.)mExStyle, (char16*)mClassName, mWindowName, (.)mStyle, mPos.X, mPos.Y, mSize.Width, mSize.Height, (.)mParent, (.)mMenu, instance, mParam);
-
-		if (result == 0)
-			return .Err;
-		return (WindowHandle)result;
-	}
-}
 
 public class EventLoop
 {
