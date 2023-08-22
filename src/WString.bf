@@ -4,6 +4,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
+using System.Diagnostics.Contracts;
 
 // String size type
 //#if BF_LARGE_STRINGS
@@ -41,9 +42,9 @@ public class WString : IHashable, IFormattable, IPrintable
 
 	int_strsize mLength;
 	uint_strsize mAllocSizeAndFlags;
-	char8* mPtrOrBuffer = null;
+	char16* mPtrOrBuffer = null;
 
-	public const String Empty = "";
+	public const WString Empty = new WString();
 
 #if BF_LARGE_STRINGS
 	const uint64 cSizeFlags = 0x3FFFFFFF'FFFFFFFF;
@@ -58,9 +59,9 @@ public class WString : IHashable, IFormattable, IPrintable
 	[AllowAppend]
 	public this(int count) // 0
 	{
-		int bufferSize = (count == 0) ? 0 : (count - 1) & ~(sizeof(char8*) - 1);
+		int bufferSize = (count == 0) ? 0 : (count - 1) & ~(sizeof(char16*) - 1);
 #unwarn
-		char8* addlPtr = append char8[bufferSize]*(?);
+		char16* addlPtr = append char16[bufferSize]*(?);
 		Init(bufferSize);
 		mAllocSizeAndFlags = (uint_strsize)bufferSize + (int_strsize)sizeof(char8*);
 		mLength = 0;
@@ -69,68 +70,68 @@ public class WString : IHashable, IFormattable, IPrintable
 	[AllowAppend]
 	public this()
 	{
-	    let bufferSize = 16 - sizeof(char8*);
+	    let bufferSize = 16 - sizeof(char16*);
 #unwarn
-	    char8* addlPtr = append char8[bufferSize]*(?);
+	    char16* addlPtr = append char16[bufferSize]*(?);
 		Init(bufferSize);
-	    mAllocSizeAndFlags = (uint_strsize)bufferSize + (int_strsize)sizeof(char8*);
+	    mAllocSizeAndFlags = (uint_strsize)bufferSize + (int_strsize)sizeof(char16*);
 	    mLength = 0;
 	}
 
 	[AllowAppend]
-	public this(String str)
+	public this(ًWString str)
 	{
 		let count = str.mLength;
-		int bufferSize = (count == 0) ? 0 : (count - 1) & ~(sizeof(char8*) - 1);
+		int bufferSize = (count == 0) ? 0 : (count - 1) & ~(sizeof(char16*) - 1);
 #unwarn
-		char8* addlPtr = append char8[bufferSize]*(?);
+		char16* addlPtr = append char16[bufferSize]*(?);
 		Init(bufferSize);
 		Internal.MemCpy(Ptr, str.Ptr, count);
 		mLength = count;
-		mAllocSizeAndFlags = (uint_strsize)bufferSize + (int_strsize)sizeof(char8*);
+		mAllocSizeAndFlags = (uint_strsize)bufferSize + (int_strsize)sizeof(char16*);
 	}
 
 	[AllowAppend]
-	public this(String str, int offset)
+	public this(WString str, int offset)
 	{
 		Debug.Assert((uint)offset <= (uint)str.Length);
 		let count = str.mLength - offset;
-		int bufferSize = (count == 0) ? 0 : (count - 1) & ~(sizeof(char8*) - 1);
+		int bufferSize = (count == 0) ? 0 : (count - 1) & ~(sizeof(char16*) - 1);
 #unwarn
-		char8* addlPtr = append char8[bufferSize]*(?);
+		char16* addlPtr = append char16[bufferSize]*(?);
 		Init(bufferSize);
 		let ptr = Ptr;
 		let srcPtr = str.Ptr;
 		for (int_strsize i = 0; i < count; i++)
 		    ptr[i] = srcPtr[i + offset];
-		mAllocSizeAndFlags = (uint_strsize)bufferSize + (int_strsize)sizeof(char8*);
+		mAllocSizeAndFlags = (uint_strsize)bufferSize + (int_strsize)sizeof(char16*);
 		mLength = (int_strsize)count;
 	}
 
 	[AllowAppend]
-	public this(String str, int offset, int count)
+	public this(WString str, int offset, int count)
 	{
 		Debug.Assert((uint)offset <= (uint)str.Length);
 		Debug.Assert(offset + count <= str.Length);
 
-		int bufferSize = (count == 0) ? 0 : (count - 1) & ~(sizeof(char8*) - 1);
+		int bufferSize = (count == 0) ? 0 : (count - 1) & ~(sizeof(char16*) - 1);
 #unwarn
-		char8* addlPtr = append char8[bufferSize]*(?);
+		char16* addlPtr = append char16[bufferSize]*(?);
 		Init(bufferSize);
 		let ptr = Ptr;
 		let srcPtr = str.Ptr;
 		for (int i = 0; i < count; i++)
 		    ptr[i] = srcPtr[i + offset];
-		mAllocSizeAndFlags = (uint_strsize)bufferSize + (int_strsize)sizeof(char8*);
+		mAllocSizeAndFlags = (uint_strsize)bufferSize + (int_strsize)sizeof(char16*);
 		mLength = (int_strsize)count;
 	}
 
 	[AllowAppend]
 	public this(char8 c, int count)
 	{
-		int bufferSize = (count == 0) ? 0 : (count - 1) & ~(sizeof(char8*) - 1);
+		int bufferSize = (count == 0) ? 0 : (count - 1) & ~(sizeof(char16*) - 1);
 #unwarn
-		char8* addlPtr = append char8[bufferSize]*(?);
+		char16* addlPtr = append char16[bufferSize]*(?);
 		Init(bufferSize);
 		let ptr = Ptr;
 		for (int_strsize i = 0; i < count; i++)
@@ -140,36 +141,52 @@ public class WString : IHashable, IFormattable, IPrintable
 	}
 
 	[AllowAppend]
-	public this(char8* char8Ptr)
+	public this(char16 c, int count)
 	{
-		let count = Internal.CStrLen(char8Ptr);
-		int bufferSize = (count == 0) ? 0 : (count - 1) & ~(sizeof(char8*) - 1);
+		int bufferSize = (count == 0) ? 0 : (count - 1) & ~(sizeof(char16*) - 1);
 #unwarn
-		char8* addlPtr = append char8[bufferSize]*(?);
+		char16* addlPtr = append char16[bufferSize]*(?);
 		Init(bufferSize);
 		let ptr = Ptr;
 		for (int_strsize i = 0; i < count; i++)
-		    ptr[i] = char8Ptr[i];
-		mAllocSizeAndFlags = (uint_strsize)bufferSize + (int_strsize)sizeof(char8*);
-		mLength = count;
-	}
-
-	[AllowAppend]
-	public this(char8* char8Ptr, int count)
-	{
-	    int bufferSize = (count == 0) ? 0 : (count - 1) & ~(sizeof(char8*) - 1);
-#unwarn
-	    char8* addlPtr = append char8[bufferSize]*(?);
-		Init(bufferSize);
-		let ptr = Ptr;
-	    for (int i = 0; i < count; i++)
-	        ptr[i] = char8Ptr[i];
-	    mAllocSizeAndFlags = (uint_strsize)bufferSize + (int_strsize)sizeof(char8*);
-	    mLength = (int_strsize)count;
+		    ptr[i] = c;
+		mAllocSizeAndFlags = (uint_strsize)bufferSize + (int_strsize)sizeof(char16*);
+		mLength = (int_strsize)count;
 	}
 
 	[AllowAppend]
 	public this(char16* char16Ptr)
+	{
+		//let count = Internal.CStrLen(char16Ptr);
+		int32 count = 0;
+		for (; char16Ptr[count] != 0; count++) NOP!();
+		int bufferSize = (count == 0) ? 0 : (count - 1) & ~(sizeof(char16*) - 1);
+#unwarn
+		char16* addlPtr = append char16[bufferSize]*(?);
+		Init(bufferSize);
+		let ptr = Ptr;
+		for (int_strsize i = 0; i < count; i++)
+		    ptr[i] = char16Ptr[i];
+		mAllocSizeAndFlags = (uint_strsize)bufferSize + (int_strsize)sizeof(char16*);
+		mLength = count;
+	}
+
+	[AllowAppend]
+	public this(char16* char16Ptr, int count)
+	{
+	    int bufferSize = (count == 0) ? 0 : (count - 1) & ~(sizeof(char16*) - 1);
+#unwarn
+	    char16* addlPtr = append char16[bufferSize]*(?);
+		Init(bufferSize);
+		let ptr = Ptr;
+	    for (int i = 0; i < count; i++)
+	        ptr[i] = char16Ptr[i];
+	    mAllocSizeAndFlags = (uint_strsize)bufferSize + (int_strsize)sizeof(char16*);
+	    mLength = (int_strsize)count;
+	}
+
+	[AllowAppend]
+	public this(char8* char16Ptr)
 	{
 		let count = UTF16.GetLengthAsUTF8(char16Ptr);
 		int bufferSize = (count == 0) ? 0 : (count - 1) & ~(sizeof(char8*) - 1);
@@ -195,86 +212,86 @@ public class WString : IHashable, IFormattable, IPrintable
 	}
 
 	[AllowAppend]
-	public this(StringView strView)
-	{			
+	public this(WStringView strView)
+	{
 		let count = strView.Length;
-		int bufferSize = (count == 0) ? 0 : (count - 1) & ~(sizeof(char8*) - 1);
+		int bufferSize = (count == 0) ? 0 : (count - 1) & ~(sizeof(char16*) - 1);
 #unwarn
-		char8* addlPtr = append char8[bufferSize]*(?);
+		char16* addlPtr = append char16[bufferSize]*(?);
 		Init(bufferSize);
 		let ptr = Ptr;
 		Internal.MemCpy(ptr, strView.Ptr, strView.Length);
-		mAllocSizeAndFlags = (uint_strsize)bufferSize + (int_strsize)sizeof(char8*);
+		mAllocSizeAndFlags = (uint_strsize)bufferSize + (int_strsize)sizeof(char16*);
 		mLength = (int_strsize)strView.Length;
 	}
 
 	[AllowAppend]
-	public this(StringView strView, CreateFlags flags)
+	public this(WStringView strView, CreateFlags flags)
 	{			
 		let count = strView.Length + (flags.HasFlag(.NullTerminate) ? 1 : 0);
-		int bufferSize = (count == 0) ? 0 : (count - 1) & ~(sizeof(char8*) - 1);
+		int bufferSize = (count == 0) ? 0 : (count - 1) & ~(sizeof(char16*) - 1);
 #unwarn
-		char8* addlPtr = append char8[bufferSize]*(?);
+		char16* addlPtr = append char16[bufferSize]*(?);
 		Init(bufferSize);
 		let ptr = Ptr;
 		Internal.MemCpy(ptr, strView.Ptr, strView.Length);
 		if (flags.HasFlag(.NullTerminate))
 			ptr[strView.Length] = 0;
-		mAllocSizeAndFlags = (uint_strsize)bufferSize + (int32)sizeof(char8*);
+		mAllocSizeAndFlags = (uint_strsize)bufferSize + (int32)sizeof(char16*);
 		mLength = (int32)strView.Length;
 	}
 
 	[AllowAppend]
-	public this(StringView strView, int offset)
+	public this(WStringView strView, int offset)
 	{
 		Debug.Assert((uint)offset <= (uint)strView.Length);
 		
 		let count = strView.Length - offset;
-		int bufferSize = (count == 0) ? 0 : (count - 1) & ~(sizeof(char8*) - 1);
+		int bufferSize = (count == 0) ? 0 : (count - 1) & ~(sizeof(char16*) - 1);
 #unwarn
-		char8* addlPtr = append char8[bufferSize]*(?);
+		char16* addlPtr = append char16[bufferSize]*(?);
 		Init(bufferSize);
 		let ptr = Ptr;
 		let srcPtr = strView.Ptr;
 		for (int i = 0; i < count; i++)
 		    ptr[i] = srcPtr[i + offset];
-		mAllocSizeAndFlags = (uint_strsize)bufferSize + (int_strsize)sizeof(char8*);
+		mAllocSizeAndFlags = (uint_strsize)bufferSize + (int_strsize)sizeof(char16*);
 		mLength = (int_strsize)count;
 	}
 
 	[AllowAppend]
-	public this(StringView strView, int offset, int count)
+	public this(WStringView strView, int offset, int count)
 	{
 		Debug.Assert((uint)offset <= (uint)strView.Length);
 		Debug.Assert(offset + count <= strView.Length);
 
-		int bufferSize = (count == 0) ? 0 : (count - 1) & ~(sizeof(char8*) - 1);
+		int bufferSize = (count == 0) ? 0 : (count - 1) & ~(sizeof(char16*) - 1);
 #unwarn
-		char8* addlPtr = append char8[bufferSize]*(?);
+		char16* addlPtr = append char16[bufferSize]*(?);
 		Init(bufferSize);
 		let ptr = Ptr;
 		let srcPtr = strView.Ptr;
 		for (int i = 0; i < count; i++)
 		    ptr[i] = srcPtr[i + offset];
-		mAllocSizeAndFlags = (uint_strsize)bufferSize + (int_strsize)sizeof(char8*);
+		mAllocSizeAndFlags = (uint_strsize)bufferSize + (int_strsize)sizeof(char16*);
 		mLength = (int_strsize)count;
 	}
 
 	[AllowAppend]
-	public this(char8[] chars, int offset, int count)
+	public this(char16[] chars, int offset, int count)
 	{
-		int bufferSize = (count == 0) ? 0 : (count - 1) & ~(sizeof(char8*) - 1);
+		int bufferSize = (count == 0) ? 0 : (count - 1) & ~(sizeof(char16*) - 1);
 #unwarn
-		char8* addlPtr = append char8[bufferSize]*(?);
+		char16* addlPtr = append char16[bufferSize]*(?);
 		Init(bufferSize);
 		let ptr = Ptr;
 		for (int i = 0; i < count; i++)
 		    ptr[i] = chars[i + offset];
-		mAllocSizeAndFlags = (uint_strsize)bufferSize + (int_strsize)sizeof(char8*);
+		mAllocSizeAndFlags = (uint_strsize)bufferSize + (int_strsize)sizeof(char16*);
 		mLength = (int_strsize)count;
 	}
 
-	static int StrLengths(String[] strs)
+	static int StrLengths(Self[] strs)
 	{
 		int count = 0;
 		for (var str in strs)
@@ -283,12 +300,12 @@ public class WString : IHashable, IFormattable, IPrintable
 	}
 
 	[AllowAppend]
-	public this(params String[] strs)
+	public this(params Self[] strs)
 	{
 		int count = StrLengths(strs);
-		int bufferSize = (count == 0) ? 0 : (count - 1) & ~(sizeof(char8*) - 1);
+		int bufferSize = (count == 0) ? 0 : (count - 1) & ~(sizeof(char16*) - 1);
 #unwarn
-		char8* addlPtr = append char8[bufferSize]*(?);
+		char16* addlPtr = append char16[bufferSize]*(?);
 		Init(bufferSize);
 		let ptr = Ptr;
 		int curIdx = 0;
@@ -299,7 +316,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		}
 		
 		mLength = (int_strsize)count;
-		mAllocSizeAndFlags = (uint_strsize)bufferSize + (int_strsize)sizeof(char8*);
+		mAllocSizeAndFlags = (uint_strsize)bufferSize + (int_strsize)sizeof(char16*);
 	}
 
 #if !VALGRIND
@@ -307,7 +324,7 @@ public class WString : IHashable, IFormattable, IPrintable
 #endif
 	void Init(int appendSize)
 	{
-		Internal.MemSet(Ptr, 0, appendSize + (int_strsize)sizeof(char8*));
+		Internal.MemSet(Ptr, 0, appendSize + (int_strsize)sizeof(char16*));
 	}
 
 	public ~this()
@@ -323,7 +340,7 @@ public class WString : IHashable, IFormattable, IPrintable
 
 	protected virtual void* Alloc(int size, int align)
 	{
-		return new char8[size]* (?);
+		return new char16[size]* (?);
 	}
 
 	protected virtual void Free(void* ptr)
@@ -372,12 +389,12 @@ public class WString : IHashable, IFormattable, IPrintable
 		}
 	}
 
-	public char8* Ptr
+	public char16* Ptr
 	{
 		//[Optimize]
 		get
 		{
-			return ((mAllocSizeAndFlags & cStrPtrFlag) != 0) ? mPtrOrBuffer : (char8*)&mPtrOrBuffer;
+			return ((mAllocSizeAndFlags & cStrPtrFlag) != 0) ? mPtrOrBuffer : (char16*)&mPtrOrBuffer;
 		}
 	}
 
@@ -401,11 +418,11 @@ public class WString : IHashable, IFormattable, IPrintable
 		}
 	}
 
-	static int GetHashCode(char8* ptr, int length)
+	static int GetHashCode(char16* ptr, int length)
 	{
 		int charsLeft = length;
 		int hash = 0;
-		char8* curPtr = ptr;
+		char16* curPtr = ptr;
 		let intSize = sizeof(int);
 		while (charsLeft >= intSize)
 		{
@@ -431,13 +448,13 @@ public class WString : IHashable, IFormattable, IPrintable
 
 	public override void ToString(String strBuffer)
 	{
-		strBuffer.Append(this);
+		strBuffer.Append(Ptr);
 	}
 	
 	[Obsolete("Replaced with Quote", false)]
-	public static void QuoteString(char8* ptr, int length, String outString) => Quote(ptr, length, outString);
+	public static void QuoteString(char16* ptr, int length, String outString) => Quote(ptr, length, outString);
 
-	public static void Quote(char8* ptr, int length, String outString)
+	public static void Quote(char16* ptr, int length, String outString)
 	{
 		outString.Append('"');
 		Escape(ptr, length, outString);
@@ -449,11 +466,11 @@ public class WString : IHashable, IFormattable, IPrintable
 		Quote(Ptr, Length, outString);
 	}
 
-	public static void Escape(char8* ptr, int length, String outString)
+	public static void Escape(char16* ptr, int length, String outString)
 	{
 		for (int i < length)
 		{
-			char8 c = ptr[i];
+			char16 c = ptr[i];
 			switch (c)
 			{
 			case '\'': outString.Append(@"\'");
@@ -486,9 +503,9 @@ public class WString : IHashable, IFormattable, IPrintable
 	}
 
 	[Obsolete("Replaced with Unquote", false)]
-	public static Result<void> UnQuoteString(char8* ptr, int length, String outString) => Unquote(ptr, length, outString);
+	public static Result<void> UnQuoteString(char16* ptr, int length, String outString) => Unquote(ptr, length, outString);
 
-	public static Result<void> Unquote(char8* ptr, int length, String outString)
+	public static Result<void> Unquote(char16* ptr, int length, String outString)
 	{
 		if (length < 2)
 			return .Err;
@@ -496,7 +513,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		// Literal string?
 		if ((ptr[0] == '@') && (ptr[1] == '"') && (ptr[length - 1] == '\"'))
 		{
-			outString.Append(ptr + 2, length - 3);
+			outString.Append(Span<char16>(ptr + 2, length - 3));
 			return .Ok;
 		}
 
@@ -511,20 +528,20 @@ public class WString : IHashable, IFormattable, IPrintable
 		return Unquote(Ptr, Length, outString);
 	}
 
-	public static Result<void> Unescape(char8* ptr, int length, String outString)
+	public static Result<void> Unescape(char16* ptr, int length, String outString)
 	{
 		var ptr;
-		char8* endPtr = ptr + length;
+		char16* endPtr = ptr + length;
 
 		while (ptr < endPtr)
 		{
-			char8 c = *(ptr++);
+			char16 c = *(ptr++);
 			if (c == '\\')
 			{
 				if (ptr == endPtr)
 					return .Err;
 
-				char8 nextC = *(ptr++);
+				char16 nextC = *(ptr++);
 				switch (nextC)
 				{
 				case '\'': outString.Append("'");
@@ -586,17 +603,17 @@ public class WString : IHashable, IFormattable, IPrintable
 
 	void IPrintable.Print(String outString)
 	{
-		String.Quote(Ptr, mLength, outString);
+		WString.Quote(Ptr, mLength, outString);
 	}
 
-	[AlwaysInclude]
-	public char8* CStr()
+	// [AlwaysInclude]
+	public char16* CStr()
 	{
 		EnsureNullTerminator();
 		return Ptr;
 	}
 
-	public static implicit operator char8*(String str)
+	public static implicit operator char16*(Self str)
 	{
 	    if (str == null)
 			return null;
@@ -604,7 +621,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		return str.Ptr;
 	}
 
-	public static implicit operator Span<char8>(String str)
+	public static implicit operator Span<char16>(Self str)
 	{
 	    if (str == null)
 			return .(null, 0);
@@ -612,14 +629,14 @@ public class WString : IHashable, IFormattable, IPrintable
 	}
 
 	[Commutable]
-	public static bool operator==(String s1, String s2)
+	public static bool operator==(Self s1, Self s2)
 	{
 		return Equals(s1, s2);
 	}
 
-	public static int operator<=>(String s1, String s2)
+	public static int operator<=>(Self s1, Self s2)
 	{
-		return String.Compare(s1, s2, false);
+		return WString.Compare(s1, s2, false);
 	}
 
 	public void Clear()
@@ -627,7 +644,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		mLength = 0;
 	}
 
-	public void Set(String str)
+	public void Set(WString str)
 	{
 		if ((Object)this == (Object)str)
 			return;
@@ -635,13 +652,13 @@ public class WString : IHashable, IFormattable, IPrintable
         Append(str.Ptr, str.mLength);
 	}
 
-	public void Set(StringView str)
+	public void Set(WStringView str)
 	{
 		mLength = 0;
 		Append(str.Ptr, str.Length);
 	}
 
-	public void MoveTo(String str, bool keepRef = false)
+	public void MoveTo(Self str, bool keepRef = false)
 	{
 		if (IsDynAlloc)
 		{
@@ -661,7 +678,7 @@ public class WString : IHashable, IFormattable, IPrintable
 			else
 			{
 				mPtrOrBuffer = null;
-				mAllocSizeAndFlags = (int_strsize)sizeof(char8*);
+				mAllocSizeAndFlags = (int_strsize)sizeof(char16*);
 				mLength = 0;
 			}
 		}
@@ -673,7 +690,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		}
 	}
 
-	public void Reference(String str)
+	public void Reference(WString str)
 	{
 		if (IsDynAlloc)
 			delete:this mPtrOrBuffer;
@@ -682,7 +699,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		mAllocSizeAndFlags = cStrPtrFlag;
 	}
 
-	public void Reference(char8* ptr, int length, int allocSize)
+	public void Reference(char16* ptr, int length, int allocSize)
 	{
 		if (IsDynAlloc)
 			delete:this mPtrOrBuffer;
@@ -691,7 +708,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		mAllocSizeAndFlags = cStrPtrFlag;
 	}
 
-	public void Reference(char8* ptr, int length)
+	public void Reference(char16* ptr, int length)
 	{
 		if (IsDynAlloc)
 			delete:this mPtrOrBuffer;
@@ -700,12 +717,12 @@ public class WString : IHashable, IFormattable, IPrintable
 		mAllocSizeAndFlags = cStrPtrFlag;
 	}
 
-	public void Reference(StringView stringView)
+	public void Reference(WStringView stringView)
 	{
 		Reference(stringView.Ptr, stringView.Length, stringView.Length);
 	}
 
-	public void Reference(char8* ptr)
+	public void Reference(char16* ptr)
 	{
 		if (IsDynAlloc)
 			delete:this mPtrOrBuffer;
@@ -744,7 +761,7 @@ public class WString : IHashable, IFormattable, IPrintable
 	{
 		Debug.Assert(AllocSize > 0, "String has been frozen");
 		Debug.Assert((uint)newSize <= cSizeFlags);
-		char8* newPtr = new:this char8[newSize]* (?);
+		char16* newPtr = new:this char16[newSize]* (?);
 		Internal.MemCpy(newPtr, Ptr, mLength);
 #if VALGRIND
 		Internal.MemSet(newPtr + mLength, 0, newSize - mLength);
@@ -761,7 +778,7 @@ public class WString : IHashable, IFormattable, IPrintable
 			Realloc(size);
 	}
 
-	void Realloc(char8* newPtr, int newSize)
+	void Realloc(char16* newPtr, int newSize)
 	{
 		Debug.Assert(AllocSize > 0, "String has been frozen");
 		Debug.Assert((uint)newSize <= cSizeFlags);
@@ -772,31 +789,31 @@ public class WString : IHashable, IFormattable, IPrintable
 		mAllocSizeAndFlags = (uint_strsize)newSize | cDynAllocFlag | cStrPtrFlag;
 	}
 
-	public static int_strsize StrLen(char8* str)
+	public static int_strsize StrLen(char16* str)
 	{
 		for (int_strsize i = 0; true; i++)
-			if (str[i] == (char8)0)
+			if (str[i] == (char16)0)
 				return i;
 	}
 
 	[NoDiscard]
-	public StringView Substring(int pos)
+	public WStringView Substring(int pos)
 	{
 		return .(this, pos);
 	}
 
 	[NoDiscard]
-	public StringView Substring(int pos, int length)
+	public WStringView Substring(int pos, int length)
 	{
 		return .(this, pos, length);
 	}
 
-	public void Append(StringView strView)
+	public void Append(WStringView strView)
 	{
 		Append(strView.Ptr, strView.Length);
 	}
 
-	public void Append(Span<char16> utf16Str)
+	public void Append(Span<char8> utf16Str)
 	{
 		UTF16.Decode(utf16Str, this);
 	}
@@ -806,28 +823,28 @@ public class WString : IHashable, IFormattable, IPrintable
 		UTF16.Decode(utf16Str, this);
 	}
 
-	public void Append(StringView str, int offset)
+	public void Append(WStringView str, int offset)
 	{
 		Debug.Assert((uint)offset <= (uint)str.[Friend]mLength);
 		Append(str.Ptr + offset, str.[Friend]mLength - offset);
 	}
 
-	public void Append(StringView str, int offset, int length)
+	public void Append(WStringView str, int offset, int length)
 	{
 		Debug.Assert((uint)offset + (uint)length <= (uint)str.[Friend]mLength);
 		Append(str.Ptr + offset, length);
 	}
 
-	public void Append(char8* appendPtr)
+	public void Append(char16* appendPtr)
 	{
 		int_strsize length = StrLen(appendPtr);
 		int_strsize newCurrentIndex = mLength + length;
-		char8* ptr;
+		char16* ptr;
 		if (newCurrentIndex > AllocSize)
 		{
 			// This handles appending to ourselves, we invalidate 'ptr' after calling Realloc
 			int newSize = CalcNewSize(newCurrentIndex);
-			char8* newPtr = new:this char8[newSize]* (?);
+			char16* newPtr = new:this char16[newSize]* (?);
 #if VALGRIND
 			Internal.MemSet(newPtr, 0, newSize);
 #endif
@@ -843,15 +860,15 @@ public class WString : IHashable, IFormattable, IPrintable
 		mLength = newCurrentIndex;
 	}
 
-	public void Append(char8* appendPtr, int length)
+	public void Append(char16* appendPtr, int length)
 	{
 		int newCurrentIndex = mLength + length;
-		char8* ptr;
+		char16* ptr;
 		if (newCurrentIndex > AllocSize)
 		{
 			// This handles appending to ourselves, we invalidate 'ptr' after calling Realloc
 			int newSize = CalcNewSize(newCurrentIndex);
-			char8* newPtr = new:this char8[newSize]* (?);
+			char16* newPtr = new:this char16[newSize]* (?);
 #if VALGRIND
 			Internal.MemSet(newPtr, 0, newSize);
 #endif
@@ -867,15 +884,15 @@ public class WString : IHashable, IFormattable, IPrintable
 		mLength = (int_strsize)newCurrentIndex;
 	}
 
-	public void Append(char8[] arr, int idx, int length)
+	public void Append(char16[] arr, int idx, int length)
 	{
 		int newCurrentIndex = mLength + length;
-		char8* ptr;
+		char16* ptr;
 		if (newCurrentIndex > AllocSize)
 		{
 			// This handles appending to ourselves, we invalidate 'ptr' after calling Realloc
 			int newSize = CalcNewSize(newCurrentIndex);
-			char8* newPtr = new:this char8[newSize]* (?);
+			char16* newPtr = new:this char16[newSize]* (?);
 #if VALGRIND
 			Internal.MemSet(newPtr, 0, newSize);
 #endif
@@ -891,32 +908,32 @@ public class WString : IHashable, IFormattable, IPrintable
 		mLength = (int_strsize)newCurrentIndex;
 	}
 
-	public char8* PrepareBuffer(int bytes)
+	public char16* PrepareBuffer(int bytes)
 	{
 		Debug.Assert(bytes >= 0);
 		if (bytes <= 0)
 			return null;
 		int count = bytes;
 		CalculatedReserve(mLength + count + 1);
-		char8* ptr = Ptr + mLength;
+		char16* ptr = Ptr + mLength;
 		mLength += (int_strsize)bytes;
 		return ptr;
 	}
 
     // Appends a copy of this string at the end of this string builder.
-	public void Append(String value)
+	public void Append(WString value)
 	{
         //Contract.Ensures(Contract.Result<String>() != null);
 		Append(value.Ptr, value.mLength);
 	}
 
-	public void Append(String str, int offset)
+	public void Append(WString str, int offset)
 	{
 		Debug.Assert((uint)offset <= (uint)str.mLength);
 		Append(str.Ptr + offset, str.mLength - offset);
 	}
 
-	public void Append(String str, int offset, int length)
+	public void Append(WString str, int offset, int length)
 	{
 		Debug.Assert((uint)offset <= (uint)str.mLength);
 		Debug.Assert(length >= 0);
@@ -924,20 +941,20 @@ public class WString : IHashable, IFormattable, IPrintable
 		Append(str.Ptr + offset, length);
 	}
 
-	public void Append(params String[] strings)
+	public void Append(params WString[] strings)
 	{
 		for (var str in strings)
 			Append(str);
 	}
 
-	public void Append(char8 c)
+	public void Append(char16 c)
 	{
 		CalculatedReserve(mLength + 1);
 		let ptr = Ptr;
 		ptr[mLength++] = c;
 	}
 
-	public void Append(char8 c, int count)
+	public void Append(char16 c, int count)
 	{
 		if (count <= 0)
 			return;
@@ -948,7 +965,7 @@ public class WString : IHashable, IFormattable, IPrintable
 			ptr[mLength++] = c;
 	}
 
-	public void Append(char32 c)
+	public void Append(char32 c) // TODO: reimplement
 	{
 		if (c < (char32)0x80)
 	    {
@@ -982,7 +999,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		}
 	}
 
-	public void Append(char32 c, int count)
+	public void Append(char32 c, int count) // TODO: reimplement
 	{
 		if (count <= 0)
 			return;
@@ -1032,17 +1049,17 @@ public class WString : IHashable, IFormattable, IPrintable
 		Append(object.ToString(.. scope .(128)));
 	}
 
-	public void operator+=(String str)
+	public void operator+=(WString str)
 	{
 		Append(str);
 	}
 
-	public void operator+=(StringView sv)
+	public void operator+=(WStringView sv)
 	{
 		Append(sv);
 	}
 
-	public void operator+=(char8 c)
+	public void operator+=(char16 c)
 	{
 		Append(c);
 	}
@@ -1057,20 +1074,20 @@ public class WString : IHashable, IFormattable, IPrintable
 		Append(obj);
 	}
 
-	[Error("String addition is not supported. Consider allocating a new string and using Append, Concat, or +=")]
-	public static String operator+(String lhs, String rhs)
+	[Error("WString addition is not supported. Consider allocating a new string and using Append, Concat, or +=")]
+	public static Self operator+(Self lhs, Self rhs)
 	{
 		return lhs;
 	}
 
-	[Error("String addition is not supported. Consider allocating a new string and using Append, Concat, or +=")]
-	public static String operator+(String lhs, StringView rhs)
+	[Error("WString addition is not supported. Consider allocating a new string and using Append, Concat, or +=")]
+	public static Self operator+(Self lhs, StringView rhs)
 	{
 		return lhs;
 	}
 
-	[Error("String addition is not supported. Consider allocating a new string and using Append, Concat, or +=")]
-	public static String operator+(String lhs, char32 rhs)
+	[Error("WString addition is not supported. Consider allocating a new string and using Append, Concat, or +=")]
+	public static Self operator+(Self lhs, char32 rhs)
 	{
 		return lhs;
 	}
@@ -1085,7 +1102,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		}
 	}
 
-	public ref char8 this[int index]
+	public ref char16 this[int index]
 	{
 		[Checked]
 		get
@@ -1114,7 +1131,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		}
 	}
 
-	public ref char8 this[Index index]
+	public ref char16 this[Index index]
 	{
 		[Checked]
 		get
@@ -1167,18 +1184,18 @@ public class WString : IHashable, IFormattable, IPrintable
 		}
 	}
 
-	public StringView this[IndexRange range]
+	public WStringView this[IndexRange range]
 	{
 #if !DEBUG
 		[Inline]
 #endif
 		get
 		{
-			return StringView(Ptr, Length)[range];
+			return WStringView(Ptr, Length)[range];
 		}
 	}
 
-	public void Concat(params Object[] objects)
+	public void Concat(params Object[] objects) // TODO: reimplement
 	{
 		// This reserves the correct number of characters if it can
 		int totalLen = 0;
@@ -1208,17 +1225,17 @@ public class WString : IHashable, IFormattable, IPrintable
 		}
 	}
 
-	public static String GetStringOrEmpty(String str)
+	public static Self GetStringOrEmpty(Self str)
 	{
 		return str ?? Empty;
 	}
 
-	public static bool IsNullOrEmpty(String str)
+	public static bool IsNullOrEmpty(Self str)
 	{
 		return (str == null) || (str.Length == 0);
 	}
 
-	public static bool IsNullOrWhiteSpace(String str)
+	public static bool IsNullOrWhiteSpace(Self str)
 	{
 		if ((str == null) || (str.Length == 0))
 			return true;
@@ -1241,7 +1258,186 @@ public class WString : IHashable, IFormattable, IPrintable
 	* @param provider The format provider
 	* @returns This method can fail if the format string is invalid.
 	*/
-	public Result<void> AppendF(IFormatProvider provider, StringView format, params Span<Object> args)
+	public Result<void> AppendF(IFormatProvider provider, StringView format, params Span<Object> args) // TODO: reimplement
+	{
+		if (format.Ptr == null)
+		{
+			return .Err;
+		}
+		//Contract.Ensures(Contract.Result<StringBuilder>() != null);
+		//Contract.EndContractBlock();
+
+		int pos = 0;
+		int len = format.Length;
+		char8 ch = '\x00';
+
+		/*ICustomFormatter cf = null;
+		if (provider != null)
+		{
+			cf = (ICustomFormatter)provider.GetFormat(typeof(ICustomFormatter));
+		}*/
+		String s = null;
+		String fmt = "";
+		int autoArgIdx = 0;
+
+		while (true)
+		{
+			int p = pos;
+			int i = pos;
+			while (pos < len)
+			{
+				ch = format[pos];
+
+				pos++;
+				if (ch == '}')
+				{
+					if (pos < len && format[pos] == '}') // Treat as escape character for }}
+						pos++;
+					else
+						return FormatError();
+				}
+
+				if (ch == '{')
+				{
+					if (pos < len && format[pos] == '{') // Treat as escape character for {{
+						pos++;
+					else
+					{
+						pos--;
+						break;
+					}
+				}
+
+				Append(ch);
+			}
+
+			if (pos == len) break;
+			pos++;
+			int index = 0;
+			if (pos == len || (ch = format[pos]) < '0' || ch > '9')
+			{
+				if ((pos < len) &&
+					((ch == '}') || (ch == ':') || (ch == ',')))
+					index = autoArgIdx++;
+				else
+					return FormatError();
+			}
+			else
+			{
+				repeat
+				{
+					index = index * 10 + ch - '0';
+					pos++;
+					if (pos == len) return FormatError();
+					ch = format[pos];
+				}
+		        while (ch >= '0' && ch <= '9' && index < 1000000);
+			}
+			if (index >= args.Length) return FormatError();
+			while (pos < len && (ch = format[pos]) == ' ') pos++;
+			bool leftJustify = false;
+			int width = 0;
+			if (ch == ',')
+			{
+				pos++;
+				while (pos < len && format[pos] == ' ') pos++;
+
+				if (pos == len) return FormatError();
+				ch = format[pos];
+				if (ch == '-')
+				{
+					leftJustify = true;
+					pos++;
+					if (pos == len) return FormatError();
+					ch = format[pos];
+				}
+				if (ch < '0' || ch > '9') return FormatError();
+				repeat
+				{
+					width = width * 10 + ch - '0';
+					pos++;
+					if (pos == len) return FormatError();
+					ch = format[pos];
+				}
+	            while (ch >= '0' && ch <= '9' && width < 1000000);
+			}
+
+			while (pos < len && (ch = format[pos]) == ' ') pos++;
+			Object arg = args[index];
+			if (ch == ':')
+			{
+				if (fmt == "")
+					fmt = scope:: String(64);
+				else
+					fmt.Clear();
+
+				bool isFormatEx = false;
+				pos++;
+				p = pos;
+				i = pos;
+				while (true)
+				{
+					if (pos == len) return FormatError();
+					ch = format[pos];
+					pos++;
+					if (ch == '{')
+					{
+						isFormatEx = true;
+						if (pos < len && format[pos] == '{')  // Treat as escape character for {{
+							pos++;
+						else
+							return FormatError();
+					}
+					else if (ch == '}')
+					{
+						// We only treat '}}' as an escape character if the format had an opening '{'. Otherwise we just close on the first '}'
+						if ((isFormatEx) && (pos < len && format[pos] == '}'))  // Treat as escape character for }}
+							pos++;
+						else
+						{
+							pos--;
+							break;
+						}
+					}
+
+					if (fmt == null)
+					{
+						fmt = scope:: String(0x100);
+					}
+					fmt.Append(ch);
+				}
+			}
+			if (ch != '}') return FormatError();
+			pos++;
+			if (s == null)
+				s = scope:: String(128);
+			
+			s.Clear();
+			IFormattable formattableArg = arg as IFormattable;
+			if (formattableArg != null)
+				formattableArg.ToString(s, fmt, provider);
+			else if (arg != null)
+				arg.ToString(s);
+			else
+				s.Append("null");
+			if (fmt != (Object)"")
+				fmt.Clear();
+			
+			if (s == null) s = String.Empty;
+			int pad = width - s.Length;
+			if (!leftJustify && pad > 0) Append(' ', pad);
+			Append(s);
+			if (leftJustify && pad > 0) Append(' ', pad);
+		}
+
+		return .Ok;
+	}
+
+	/** Appends formatted text.
+	* @param provider The format provider
+	* @returns This method can fail if the format string is invalid.
+	*/
+	public Result<void> AppendF(IFormatProvider provider, WStringView format, params Span<Object> args) // TODO: reimplement
 	{
 		if (format.Ptr == null)
 		{
@@ -1443,7 +1639,34 @@ public class WString : IHashable, IFormattable, IPrintable
 		return -1;
 	}
 
-	public int Count(char8 c)
+	public Result<void> AppendF(WStringView format, params Span<Object> args)
+	{
+		return AppendF((IFormatProvider)null, format, params args);
+	}
+
+	public int IndexOf(WStringView subStr, bool ignoreCase = false)
+	{
+		for (int ofs = 0; ofs <= Length - subStr.Length; ofs++)
+		{
+			if (Compare(Ptr+ofs, subStr.Length, subStr.Ptr, subStr.Length, ignoreCase) == 0)
+				return ofs;
+		}
+
+		return -1;
+	}
+
+	public int IndexOf(WStringView subStr, int startIdx, bool ignoreCase = false)
+	{
+		for (int ofs = startIdx; ofs <= Length - subStr.Length; ofs++)
+		{
+			if (Compare(Ptr+ofs, subStr.Length, subStr.Ptr, subStr.Length, ignoreCase) == 0)
+				return ofs;
+		}
+
+		return -1;
+	}
+
+	public int Count(char16 c)
 	{
 		int count = 0;
 		let ptr = Ptr;
@@ -1453,7 +1676,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		return count;
 	}
 
-	public int IndexOf(char8 c, int startIdx = 0)
+	public int IndexOf(char16 c, int startIdx = 0)
 	{
 		let ptr = Ptr;
 		for (int i = startIdx; i < mLength; i++)
@@ -1462,7 +1685,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		return -1;
 	}
 
-	public int LastIndexOf(char8 c)
+	public int LastIndexOf(char16 c)
 	{
 		let ptr = Ptr;
 		for (int i = mLength - 1; i >= 0; i--)
@@ -1471,7 +1694,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		return -1;
 	}
 
-	public int LastIndexOf(char8 c, int startCheck)
+	public int LastIndexOf(char16 c, int startCheck)
 	{
 		let ptr = Ptr;
 		for (int i = startCheck; i >= 0; i--)
@@ -1480,17 +1703,17 @@ public class WString : IHashable, IFormattable, IPrintable
 		return -1;
 	}
 
-	public int IndexOfAny(char8[] targets)
+	public int IndexOfAny(char16[] targets)
 	{
 		return IndexOfAny(targets, 0, mLength);
 	}
 
-	public int IndexOfAny(char8[] targets, int startIdx)
+	public int IndexOfAny(char16[] targets, int startIdx)
 	{
 		return IndexOfAny(targets, startIdx, mLength - startIdx);
 	}
 
-	public int IndexOfAny(char8[] targets, int startIdx, int count)
+	public int IndexOfAny(char16[] targets, int startIdx, int count)
 	{
 		let ptr = Ptr;
 		for (var i = startIdx; i < count; i++)
@@ -1511,7 +1734,12 @@ public class WString : IHashable, IFormattable, IPrintable
 		return IndexOf(str, ignoreCase) != -1;
 	}
 
-	public bool Contains(char8 c)
+	public bool Contains(WStringView str, bool ignoreCase = false)
+	{
+		return IndexOf(str, ignoreCase) != -1;
+	}
+
+	public bool Contains(char16 c)
 	{
 		let ptr = Ptr;
 		for (int_strsize i = 0; i < mLength; i++)
@@ -1520,7 +1748,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		return false;
 	}
 
-	public void Replace(char8 c, char8 newC)
+	public void Replace(char16 c, char16 newC)
 	{
 		let ptr = Ptr;
 		for (int_strsize i = 0; i < mLength; i++)
@@ -1606,7 +1834,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		CaseConv(false);
 	}
 
-	[CallingConvention(.Cdecl)]
+	/*[CallingConvention(.Cdecl)]
 	static extern int UTF8GetAllocSize(char8* str, int strlen, int32 options);
 	[CallingConvention(.Cdecl)]
 	static extern int UTF8Map(char8* str, int strlen, char8* outStr, int outSize, int32 options);
@@ -1648,7 +1876,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		destStr.mLength = (int_strsize)newLen;
 		destStr.mAllocSizeAndFlags = (uint_strsize)(newLen + 1) | cDynAllocFlag | cStrPtrFlag;
 		return .Ok;
-	}
+	}*/
 
 	public void Remove(int startIdx, int length)
 	{
@@ -1675,7 +1903,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		Remove(mLength - length, length);
 	}
 
-	public void Insert(int idx, StringView addString)
+	public void Insert(int idx, WStringView addString)
 	{
 		Contract.Requires(idx >= 0);
 
@@ -1691,7 +1919,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		mLength = newLength;
 	}
 
-	public void Insert(int idx, char8 c)
+	public void Insert(int idx, char16 c)
 	{
 		Contract.Requires(idx >= 0);
 
@@ -1706,7 +1934,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		mLength = newLength;
 	}
 
-	public void Insert(int idx, char8 c, int count)
+	public void Insert(int idx, char16 c, int count)
 	{
 		Contract.Requires(idx >= 0);
 
@@ -1725,7 +1953,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		mLength = newLength;
 	}
 
-	public void Insert(int idx, char32 c)
+	public void Insert(int idx, char32 c) // TODO: reimplement
 	{
 		Contract.Requires(idx >= 0);
 
@@ -1736,7 +1964,7 @@ public class WString : IHashable, IFormattable, IPrintable
 			let ptr = Ptr;
 			if (moveChars > 0)
 				Internal.MemMove(ptr + idx + 1, ptr + idx, moveChars);
-		    ptr[idx] = (char8)c;
+		    ptr[idx] = (char16)c;
 			mLength++;
 		}
 		else if (c < (char32)0x800)
@@ -1774,7 +2002,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		}
 	}
 
-	public void Insert(int idx, char32 c, int count)
+	public void Insert(int idx, char32 c, int count) // TODO: reimplement
 	{
 		Contract.Requires(idx >= 0);
 
@@ -1825,7 +2053,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		mLength = newLength;
 	}
 
-	static bool EqualsHelper(char8* a, char8* b, int length)
+	static bool EqualsHelper(char16* a, char16* b, int length)
 	{
 		for (int i = 0; i < length; i++)
 			if (a[i] != b[i])
@@ -1833,10 +2061,10 @@ public class WString : IHashable, IFormattable, IPrintable
 		return true;
 	}
 
-	static bool EqualsIgnoreCaseHelper(char8* a, char8* b, int length)
+	static bool EqualsIgnoreCaseHelper(char16* a, char16* b, int length)
 	{
-		char8* curA = a;
-		char8* curB = b;
+		char16* curA = a;
+		char16* curB = b;
 		int curLength = length;
 
         /*Contract.Requires(strA != null);
@@ -1865,15 +2093,15 @@ public class WString : IHashable, IFormattable, IPrintable
 		return true;
 	}
 
-	private static int CompareOrdinalIgnoreCaseHelper(String strA, String strB)
+	private static int CompareOrdinalIgnoreCaseHelper(WString strA, WString strB)
 	{
         /*Contract.Requires(strA != null);
         Contract.Requires(strB != null);
         Contract.EndContractBlock();*/
 		int_strsize length = Math.Min(strA.mLength, strB.mLength);
 
-		char8* a = strA.Ptr;
-		char8* b = strB.Ptr;
+		char16* a = strA.Ptr;
+		char16* b = strB.Ptr;
 
 		while (length != 0)
 		{
@@ -1898,10 +2126,10 @@ public class WString : IHashable, IFormattable, IPrintable
 		return strA.mLength - strB.mLength;
 	}
 
-	private static int CompareOrdinalIgnoreCaseHelper(char8* strA, int lengthA, char8* strB, int lengthB)
+	private static int CompareOrdinalIgnoreCaseHelper(char16* strA, int lengthA, char16* strB, int lengthB)
 	{
-		char8* a = strA;
-		char8* b = strB;
+		char16* a = strA;
+		char16* b = strB;
 		int length = Math.Min(lengthA, lengthB);
 
 		while (length != 0)
@@ -1926,15 +2154,15 @@ public class WString : IHashable, IFormattable, IPrintable
 		return lengthA - lengthB;
 	}
 
-	private static int CompareOrdinalIgnoreCaseHelper(String strA, int indexA, int lengthA, String strB, int indexB, int lengthB)
+	private static int CompareOrdinalIgnoreCaseHelper(WString strA, int indexA, int lengthA, WString strB, int indexB, int lengthB)
 	{
 		return CompareOrdinalIgnoreCaseHelper(strA.Ptr + indexA, lengthA, strB.Ptr + indexB, lengthB);
 	}
 
-	private static int CompareOrdinalHelper(char8* strA, int lengthA, char8* strB, int lengthB)
+	private static int CompareOrdinalHelper(char16* strA, int lengthA, char16* strB, int lengthB)
 	{
-		char8* a = strA;
-		char8* b = strB;
+		char16* a = strA;
+		char16* b = strB;
 		int length = Math.Min(lengthA, lengthB);
 
 		while (length != 0)
@@ -1954,26 +2182,26 @@ public class WString : IHashable, IFormattable, IPrintable
 		return lengthA - lengthB;
 	}
 
-	public static int Compare(char8* strA, int lengthA, char8* strB, int lengthB, bool ignoreCase)
+	public static int Compare(char16* strA, int lengthA, char16* strB, int lengthB, bool ignoreCase)
 	{
 		if (ignoreCase)
 			return CompareOrdinalIgnoreCaseHelper(strA, lengthA, strB, lengthB);
 		return CompareOrdinalHelper(strA, lengthA, strB, lengthB);
 	}
 
-	private static int CompareOrdinalHelper(String strA, int indexA, int lengthA, String strB, int indexB, int lengthB)
+	private static int CompareOrdinalHelper(WString strA, int indexA, int lengthA, WString strB, int indexB, int lengthB)
 	{
 	    return CompareOrdinalHelper(strA.Ptr + indexA, lengthA, strB.Ptr + indexB, lengthB);
 	}
 
-	public int CompareTo(String strB, bool ignoreCase = false)
+	public int CompareTo(WString strB, bool ignoreCase = false)
 	{
 		if (ignoreCase)
 			return CompareOrdinalIgnoreCaseHelper(Ptr, Length, strB.Ptr, strB.Length);
 		return CompareOrdinalHelper(Ptr, Length, strB.Ptr, strB.Length);
 	}
 
-	public static int Compare(String strA, String strB, bool ignoreCase)
+	public static int Compare(WString strA, WString strB, bool ignoreCase)
 	{
 		//they can't both be null;
 		if (strA == null)
@@ -1993,7 +2221,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		//return Compare(strA, 0, strB, 0, strB.Length, ignoreCase);
 	}
 
-	public static int Compare(String strA, int indexA, String strB, int indexB, int length, bool ignoreCase)
+	public static int Compare(WString strA, int indexA, WString strB, int indexB, int length, bool ignoreCase)
     {
 	    int lengthA = length;
 	    int lengthB = length;
@@ -2024,12 +2252,12 @@ public class WString : IHashable, IFormattable, IPrintable
 	    return CultureInfo.CurrentCulture.CompareInfo.Compare(strA, indexA, lengthA, strB, indexB, lengthB, CompareOptions.None);*/
 	}
 
-	public bool Equals(String b, StringComparison comparisonType = StringComparison.Ordinal)
+	public bool Equals(WString b, StringComparison comparisonType = StringComparison.Ordinal)
 	{
-		return String.Equals(this, b, comparisonType);
+		return WString.Equals(this, b, comparisonType);
 	}
 
-	public static bool Equals(String a, String b, StringComparison comparisonType = StringComparison.Ordinal)
+	public static bool Equals(WString a, WString b, StringComparison comparisonType = StringComparison.Ordinal)
 	{
 		if ((Object)a == (Object)b)
 			return true;
@@ -2042,14 +2270,14 @@ public class WString : IHashable, IFormattable, IPrintable
 		return EqualsHelper(a.Ptr, b.Ptr, a.mLength);
 	}
 	
-	public bool Equals(StringView str)
+	public bool Equals(WStringView str)
 	{
 		if (mLength != str.[Friend]mLength)
 			return false;
 		return EqualsHelper(str.Ptr, Ptr, mLength);
 	}
 
-	public bool Equals(StringView str, StringComparison comparisonType = StringComparison.Ordinal)
+	public bool Equals(WStringView str, StringComparison comparisonType = StringComparison.Ordinal)
 	{
 		if (mLength != str.[Friend]mLength)
 			return false;
@@ -2058,7 +2286,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		return EqualsHelper(str.Ptr, Ptr, mLength);
 	}
 
-	public bool StartsWith(StringView b, StringComparison comparisonType = StringComparison.Ordinal)
+	public bool StartsWith(WStringView b, StringComparison comparisonType = StringComparison.Ordinal)
 	{
 		if (mLength < b.[Friend]mLength)
 			return false;
@@ -2067,7 +2295,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		return EqualsHelper(this.Ptr, b.Ptr, b.[Friend]mLength);
 	}
 
-	public bool EndsWith(StringView b, StringComparison comparisonType = StringComparison.Ordinal)
+	public bool EndsWith(WStringView b, StringComparison comparisonType = StringComparison.Ordinal)
 	{
 		if (mLength < b.[Friend]mLength)
 			return false;
@@ -2076,7 +2304,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		return EqualsHelper(this.Ptr + mLength - b.[Friend]mLength, b.Ptr, b.[Friend]mLength);
 	}
 
-	public bool StartsWith(char8 c)
+	public bool StartsWith(char16 c)
 	{
 		if (mLength == 0)
 			return false;
@@ -2092,7 +2320,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		return UTF8.Decode(Ptr, mLength).c == c;
 	}
 
-	public bool EndsWith(char8 c)
+	public bool EndsWith(char16 c)
 	{
 		if (mLength == 0)
 			return false;
@@ -2105,14 +2333,14 @@ public class WString : IHashable, IFormattable, IPrintable
 			return EndsWith((char8)c);
 		if (mLength == 0)
 			return false;
-		char8* ptr = Ptr;
+		char16* ptr = Ptr;
 		int idx = mLength - 1;
 		while ((idx > 0) && ((uint8)ptr[idx] & 0xC0 == 0x80))
 			idx--;
 		return UTF8.Decode(ptr + idx, mLength - idx).c == c;
 	}
 
-	private void ReplaceLargerHelper(StringView find, StringView replace)
+	private void ReplaceLargerHelper(WStringView find, WStringView replace)
 	{
 		List<int> replaceEntries = scope List<int>(8192);
 		
@@ -2157,7 +2385,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		mLength = (int_strsize)destLength;
 	}
 
-	public void Replace(StringView find, StringView replace)
+	public void Replace(WStringView find, WStringView replace)
 	{
 		if (replace.Length > find.Length)
 		{
@@ -2175,7 +2403,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		if (find.Length == 1)
 		{
 			// Optimized version for single-character replacements
-			char8 findC = find[0];
+			char16 findC = find[0];
 			while (inIdx < mLength)
 			{
 				if (ptr[inIdx] == findC)
@@ -2235,7 +2463,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		mLength = outIdx;
 	}
 
-	public void Replace(int start, int length, StringView replaceWith)
+	public void Replace(int start, int length, WStringView replaceWith)
 	{
 		Debug.Assert(start >= 0 && start <= Length);
 		Debug.Assert(length >= 0 && length <= Length - start);
@@ -2272,9 +2500,9 @@ public class WString : IHashable, IFormattable, IPrintable
 		}
 	}
 	
-	public void Replace(IndexRange range, StringView replaceWith)
+	public void Replace(IndexRange range, WStringView replaceWith)
 	{
-		StringView view = this;
+		WStringView view = this;
 
 		int start = view.[Friend]GetRangeStart(range);
 		int end = view.[Friend]GetRangeEnd(range);
@@ -2287,7 +2515,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		let ptr = Ptr;
 		for (int i = mLength - 1; i >= 0; i--)
 		{
-			char8 c = ptr[i];
+			char16 c = ptr[i];
 			if (c >= (char8)0x80)
 			{
 				var (c32, idx, len) = GetChar32WithBacktrack(i);
@@ -2314,7 +2542,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		let ptr = Ptr;
 		for (int i = 0; i < mLength; i++)
 		{
-			char8 c = ptr[i];
+			char16 c = ptr[i];
 			if (c >= (char8)0x80)
 			{
 				var (c32, len) = GetChar32(i);
@@ -2347,7 +2575,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		let ptr = Ptr;
 		for (int i = mLength - 1; i >= 0; i--)
 		{
-			char8 c = ptr[i];
+			char16 c = ptr[i];
 			if (c >= (char8)0x80)
 			{
 				var (c32, idx, len) = GetChar32WithBacktrack(i);
@@ -2369,7 +2597,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		Clear();
 	}
 
-	public void TrimEnd(char8 trimChar)
+	public void TrimEnd(char16 trimChar)
 	{
 		TrimEnd((char32)trimChar);
 	}
@@ -2379,7 +2607,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		let ptr = Ptr;
 		for (int i = 0; i < mLength; i++)
 		{
-			char8 c = ptr[i];
+			char16 c = ptr[i];
 			if (c >= (char8)0x80)
 			{
 				var (c32, len) = GetChar32(i);
@@ -2401,7 +2629,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		Clear();
 	}
 
-	public void TrimStart(char8 trimChar)
+	public void TrimStart(char16 trimChar)
 	{
 		TrimStart((char32)trimChar);
 	}
@@ -2412,13 +2640,13 @@ public class WString : IHashable, IFormattable, IPrintable
 		TrimEnd(trimChar);
 	}
 
-	public void Trim(char8 trimChar)
+	public void Trim(char16 trimChar)
 	{
 		TrimStart((.)trimChar);
 		TrimEnd((.)trimChar);
 	}
 	
-	public void PadLeft(int totalWidth, char8 paddingChar)
+	public void PadLeft(int totalWidth, char16 paddingChar)
 	{
 		Insert(0, paddingChar, totalWidth - Length);
 	}
@@ -2433,7 +2661,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		Insert(0, ' ', totalWidth - Length);
 	}
 
-	public void PadRight(int totalWidth, char8 paddingChar)
+	public void PadRight(int totalWidth, char16 paddingChar)
 	{
 		Append(paddingChar, totalWidth - Length);
 	}
@@ -2448,7 +2676,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		Append(' ', totalWidth - Length);
 	}
 
-	public void Join(StringView sep, IEnumerator<String> enumerable)
+	public void Join(WStringView sep, IEnumerator<WString> enumerable)
 	{
 		bool isFirst = true;
 		for (var str in enumerable)
@@ -2460,7 +2688,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		}
 	}
 
-	public void Join(StringView sep, IEnumerator<StringView> enumerable)
+	public void Join(WStringView sep, IEnumerator<WStringView> enumerable)
 	{
 		bool isFirst = true;
 		for (var str in enumerable)
@@ -2472,7 +2700,7 @@ public class WString : IHashable, IFormattable, IPrintable
 		}
 	}
 
-	public void Join(String separator, params String[] values)
+	public void Join(WString separator, params WString[] values)
 	{
 		for (int i = 0; i < values.Count; i++)
 		{
@@ -3326,7 +3554,7 @@ public struct StringStringSplitEnumerator : IEnumerator<StringView>
 	}
 }
 
-public struct StringView : Span<char8>, IFormattable, IPrintable, IHashable
+public struct WStringView : Span<char16>, IFormattable, IPrintable, IHashable
 {
 	public this()
 	{
@@ -4175,7 +4403,7 @@ public struct StringView : Span<char8>, IFormattable, IPrintable, IHashable
 	}
 }
 
-class StringWithAlloc : String
+class WStringWithAlloc : String
 {
 	IRawAllocator mAlloc;
 

@@ -13,6 +13,7 @@ extension Enum
 		where T : operator ~T
 		=> _base & ~value;
 
+	[Obsolete("Use HasFlag() method instead.")]
 	public static bool Contains<T>(T _base, T value)
 		where T : Enum
 		where T : operator T & T
