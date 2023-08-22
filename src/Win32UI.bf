@@ -30,7 +30,7 @@ static
 		int32 extraWindowBytes = 0
 		)
 	{
-		Win32.WNDCLASSEXW result = default;
+		/*Win32.WNDCLASSEXW result = default;
 
 		result.cbSize = sizeof(Win32.WNDCLASSEXW);
 		result.cbClsExtra = extraClassBytes;
@@ -45,7 +45,22 @@ static
 		// result.lpszMenuName = ...;
 		result.style = NotZero(style, 0); // TODO
 
-		return result;
+		return result;*/
+
+		return WNDCLASSEXW() {
+			cbSize        = sizeof(Win32.WNDCLASSEXW),
+			cbClsExtra    = extraClassBytes,
+			cbWndExtra    = extraWindowBytes,
+			hbrBackground = NotZero((Win32.HBRUSH)backgroundBrush, Win32.GetStockObject(.WHITE_BRUSH)),
+			hCursor       = NotZero((Win32.HCURSOR)cursor, Win32.LoadCursorW(0, Win32.IDC_ARROW)),
+			hIconSm       = NotZero((Win32.HICON)smallIcon, Win32.LoadImageW((Win32.HINSTANCE)WindowClassBuilder.CurrentInstance, (.)(void*)5, .IMAGE_ICON, Win32.GetSystemMetrics(.SM_CXSMICON), Win32.GetSystemMetrics(.SM_CYSMICON), .LR_DEFAULTCOLOR)),
+			hIcon         = NotZero((Win32.HICON)icon, Win32.LoadIconW(0, Win32.IDI_APPLICATION)),
+			hInstance     = (.)NotZero(module, WindowClassBuilder.CurrentInstance),
+			lpfnWndProc   = windowProc ?? => WindowProc,
+			// lpszClassName = ... ,
+			// lpszMenuName  = ... ,
+			style         = NotZero(style, 0) // TODO
+		};
 	}
 
 	public static Result<void> RegisterWindowClass(
