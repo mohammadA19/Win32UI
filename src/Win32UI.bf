@@ -440,12 +440,14 @@ public struct ConstructionParams : this(
 static
 {
 	const Point DefaultPosition = .(Win32.CW_USEDEFAULT, Win32.CW_USEDEFAULT);
+	public const ConstructionParams OverlappedWindow = .("", "Window", WS.OVERLAPPEDWINDOW, 0, DefaultPosition, .(500, 400));
 	public const ConstructionParams ButtonParams = .("BUTTON", "Button", WS.VISIBLE | WS.CHILD, 0, DefaultPosition, .(300, 25));
 
 	public static Result<WindowHandle> CreateWindow(ConstructionParams cParams, String className = null, String windowName = null, WINDOW_STYLE? style = null,
 		WINDOW_EX_STYLE? exStyle = null, Point? position = null, Size? size = null, WindowHandle? parent = null, MenuHandle? menu = null)
 	{
 		// Debug.Assert(cParams != null, scope $"Argument '{nameof(cParams)}' must not be null");
+		Debug.Assert(className != null || cParams.ClassName != null, "class name is not provided by arguments nor by ConstructionParams instance");
 		let pos = position ?? cParams.Position;
 		let sz = size ?? cParams.Size;
 
