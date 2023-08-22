@@ -19,7 +19,9 @@ class Program
 		else
 			Win32.MessageBoxW(0, scope $"LastError = {Win32.GetLastError()}".ToScopedNativeWChar!(), "Failure".ToScopedNativeWChar!(), .MB_OK); */
 
-		var res = RegisterWindowClass("Win32UI.Test");
+		RegisterWindowClass("Win32UI.Test");
+		
 		var window = CreateWindow(OverlappedWindow, "Win32UI.Test");
+		scope EventLoop().Run();
 	}
 }
