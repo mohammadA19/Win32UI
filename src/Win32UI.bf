@@ -63,7 +63,7 @@ static
 		)
 	{
 		Debug.Assert(windowClassName != null);
-		var wc = PrepareWndClassExW(backgroundBrush, cursor, smallIcon, icon, module, windowProc, style, extraClassBytes, extraClassBytes);
+		var wc = PrepareWndClassExW(backgroundBrush, cursor, smallIcon, icon, module, windowProc, style, extraClassBytes, extraWindowBytes);
 
 		wc.lpszClassName = windowClassName.ToScopedNativeWChar!();
 		wc.lpszMenuName = menuName?.ToScopedNativeWChar!();
