@@ -5,11 +5,11 @@ using System.Text;
 using System.Interop;
 using System.Diagnostics;
 
-public struct WindowClassBuilderParams
+/*public struct WindowClassBuilderParams
 {
 	Win32.WNDCLASSEXW mWndClass = .() { cbSize = sizeof(Win32.WNDCLASSEXW) };
 	String mClassName, mMenuName;
-}
+}*/
 
 static
 {
@@ -87,7 +87,7 @@ static
 	}
 }
 
-public class WindowClassBuilder
+/*public class WindowClassBuilder
 {
 	Win32.WNDCLASSEXW mStruct;
 	Span<char16>      mClassName ~ if (_.Ptr != null) delete _.Ptr;
@@ -284,7 +284,7 @@ public class WindowClassBuilder
 			return .Err;
 		return r;
 	}
-}
+} */
 
 [CRepr]
 public struct Point
