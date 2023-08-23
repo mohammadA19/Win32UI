@@ -1,4 +1,4 @@
-namespace Win32UI;
+/*namespace Win32UI;
 using System;
 using System.Collections;
 using System.Diagnostics;
@@ -4428,3 +4428,4 @@ class WStringWithAlloc : String
 		 mAlloc.Free(ptr);
 	}
 }
+*/

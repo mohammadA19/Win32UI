@@ -21,7 +21,7 @@ class Program
 
 		RegisterWindowClass("Win32UI.Test");
 		
-		var window = CreateWindow(OverlappedWindow, "Win32UI.Test");
+		//CreateWindow(OverlappedWindowParams2, "Win32UI.Test");
 		scope EventLoop().Run();
 	}
 }
