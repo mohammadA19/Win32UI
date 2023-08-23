@@ -57,7 +57,7 @@ static
 		};
 	}
 
-	public static Result<void> RegisterWindowClass(
+	public static Result<WindowClass> RegisterWindowClass(
 		String windowClassName,
 		String menuName = null,
 		BrushHandle backgroundBrush = 0,
@@ -77,34 +77,31 @@ static
 		wc.lpszClassName = windowClassName.ToScopedNativeWChar!();
 		wc.lpszMenuName = menuName?.ToScopedNativeWChar!();
 
-		return Win32.RegisterClassExW(&wc) != 0 ? .Ok : .Err;
+		let atom = Win32.RegisterClassExW(&wc);
+		return atom != 0 ? WindowClass(atom) : .Err;
 	}
 }
 
 public struct WindowClass
 {
-	ConstructionParams mDefaultParams;
 	char16* mClassName;
 
-	public this(char16* classNamePtr, ConstructionParams defaultParams = OverlappedWindowParams)
+	public this(char16* classNamePtr)
 	{
-		mDefaultParams = defaultParams;
 		mClassName = classNamePtr;
 	}
 
-	public this(uint16 atom, ConstructionParams defaultParams = OverlappedWindowParams)
+	public this(uint16 atom)
 	{
-		mDefaultParams = defaultParams;
 		mClassName = (char16*)(void*)(int)atom;
 	}
 
 	/*[AllowAppend]
-	public this(String className, ConstructionParams defaultParams = OverlappedWindowParams)
+	public this(String className)
 	{
 		// if (className == null)
 			// return;
 		Debug.Assert(className != null, "class name must not be null");
-		mDefaultParams = defaultParams;
 
 		int encodedLen = UTF16.GetEncodedLen(className);
 		char16* appendPtr = append char16[encodedLen+1]* (?);
@@ -113,8 +110,6 @@ public struct WindowClass
 		UTF16.Encode(className, (.)mClassName, encodedLen);
 		mClassName[encodedLen] = 0;
 	}*/
-
-	public ConstructionParams DefaultParams => mDefaultParams;
 
 	static bool IsAtom(char16* v)
 	{
@@ -469,16 +464,7 @@ public enum WINDOW_EX_STYLE : uint32
 public typealias WS_EX = WINDOW_EX_STYLE;
 
 public struct ConstructionParams : this(
-	String WindowName,
-	WINDOW_STYLE Style,
-	WINDOW_EX_STYLE ExStyle,
-	Point Position,
-	Size Size,
-	WindowHandle Parent = 0,
-	MenuHandle Menu = 0);
-
-public struct ConstructionParams2 : this(
-	String ClassName,
+	WindowClass? WindowClass,
 	String WindowName,
 	WINDOW_STYLE Style,
 	WINDOW_EX_STYLE ExStyle,
@@ -492,44 +478,23 @@ static
 	const Point DefaultPosition = .(Win32.CW_USEDEFAULT, Win32.CW_USEDEFAULT);
 
 	static char16[?] ButtonClassName = "BUTTON".ToConstNativeW();
+	public static WindowClass Button = .(&ButtonClassName);
 
-	public const ConstructionParams OverlappedWindowParams = .("Window", WS.OVERLAPPEDWINDOW, 0, DefaultPosition, .(500, 400));
-	public const ConstructionParams ButtonParams = .("Button", WS.VISIBLE | WS.CHILD, 0, DefaultPosition, .(300, 25));
+	public const ConstructionParams OverlappedWindowParams = .(null, "Window", WS.OVERLAPPEDWINDOW, 0, DefaultPosition, .(500, 400));
+	public const ConstructionParams ButtonParams = .(Button, "Button", WS.VISIBLE | WS.CHILD, 0, DefaultPosition, .(300, 25));
 
-	public static WindowClass Button = .(&ButtonClassName[0], ButtonParams);
-
-	public static Result<WindowHandle> CreateWindow(ConstructionParams2 cParams, String className = null, String windowName = null, WINDOW_STYLE? style = null,
+	public static Result<WindowHandle> CreateWindow(ConstructionParams cParams, String className = null, String windowName = null, WINDOW_STYLE? style = null,
 		WINDOW_EX_STYLE? exStyle = null, Point? position = null, Size? size = null, WindowHandle? parent = null, MenuHandle? menu = null)
 	{
 		// Debug.Assert(cParams != null, scope $"Argument '{nameof(cParams)}' must not be null");
-		Debug.Assert(className != null || cParams.ClassName != null, "class name is not provided by arguments nor by ConstructionParams instance");
+		Debug.Assert(className != null || cParams.WindowClass != null, "window class name is not provided by arguments nor by ConstructionParams instance");
 		let pos = position ?? cParams.Position;
 		let sz = size ?? cParams.Size;
 
-		let result = Win32.CreateWindowExW((.)(exStyle ?? cParams.ExStyle), (className ?? cParams.ClassName).ToScopedNativeWChar!(), 
+		let result = Win32.CreateWindowExW((.)(exStyle ?? cParams.ExStyle), className?.ToScopedNativeWChar!() ?? cParams.WindowClass, 
 			(windowName ?? cParams.WindowName).ToScopedNativeWChar!(),  (.)(style ?? cParams.Style), 
 			pos.X, pos.Y, sz.Width, sz.Height, (.)(parent ?? cParams.Parent), (.)(menu ?? cParams.Menu), (.)CurrentInstance, null);
 
-		if (result == 0)
-			return .Err;
-		return (WindowHandle)result;
-	}
-
-
-	public static Result<WindowHandle> CreateWindow(WindowClass wClass, String windowName = null, WINDOW_STYLE? style = null,
-		WINDOW_EX_STYLE? exStyle = null, Point? position = null, Size? size = null, WindowHandle? parent = null, MenuHandle? menu = null)
-	{
-		// Debug.Assert(cParams != null, scope $"Argument '{nameof(cParams)}' must not be null");
-		let cParams = wClass.DefaultParams;
-		let pos = position ?? cParams.Position;
-		let sz = size ?? cParams.Size;
-
-		let result = Win32.CreateWindowExW((.)(exStyle ?? cParams.ExStyle), wClass.[Friend]mClassName, 
-			(windowName ?? cParams.WindowName).ToScopedNativeWChar!(),  (.)(style ?? cParams.Style), 
-			pos.X, pos.Y, sz.Width, sz.Height, (.)(parent ?? cParams.Parent), (.)(menu ?? cParams.Menu), (.)CurrentInstance, null);
-
-		if (result == 0)
-			return .Err;
-		return (WindowHandle)result;
+		return result != 0 ? (.)result : .Err;
 	}
 }
