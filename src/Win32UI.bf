@@ -5,12 +5,6 @@ using System.Text;
 using System.Interop;
 using System.Diagnostics;
 
-/*public struct WindowClassBuilderParams
-{
-	Win32.WNDCLASSEXW mWndClass = .() { cbSize = sizeof(Win32.WNDCLASSEXW) };
-	String mClassName, mMenuName;
-}*/
-
 static
 {
 	static T NotZero<T>(T value, T valueIfZero)
