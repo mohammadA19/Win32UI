@@ -4146,7 +4146,7 @@ public static class Win32
 	public static extern LRESULT CallWindowProcW(WNDPROC lpPrevWndFunc, WindowHandle hWnd, uint32 Msg, WPARAM wParam, LPARAM lParam);
 
 	[Import("USER32.lib"), CLink, CallingConvention(.Stdcall)]
-	public static extern WindowHandle CreateWindowExW(WINDOW_EX_STYLE dwExStyle, PWSTR lpClassName, PWSTR lpWindowName, WINDOW_STYLE dwStyle, int32 X, int32 Y, int32 nWidth, int32 nHeight, WindowHandle hWndParent, HMENU hMenu, ModuleHandle hInstance, void* lpParam);
+	public static extern WindowHandle CreateWindowExW(WINDOW_EX_STYLE dwExStyle, PWSTR lpClassName, PWSTR lpWindowName, WINDOW_STYLE dwStyle, int32 X, int32 Y, int32 nWidth, int32 nHeight, WindowHandle hWndParent, MenuHandle hMenu, ModuleHandle hInstance, void* lpParam);
 
 	[Import("USER32.lib"), CLink, CallingConvention(.Stdcall)]
 	public static extern LRESULT DefWindowProcW(WindowHandle hWnd, uint32 Msg, WPARAM wParam, LPARAM lParam);
