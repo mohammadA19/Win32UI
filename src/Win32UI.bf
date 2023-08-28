@@ -28,9 +28,9 @@ static
 			cbSize        = sizeof(Win32.WNDCLASSEXW),
 			cbClsExtra    = extraClassBytes,
 			cbWndExtra    = extraWindowBytes,
-			hbrBackground = NotZero((Win32.HBRUSH)backgroundBrush, Win32.GetStockObject(.WHITE_BRUSH)),
-			hCursor       = NotZero((Win32.HCURSOR)cursor, Cursor.LoadFromSystem(.ARROW)),
-			hIconSm       = NotZero((Win32.HICON)smallIcon, Win32.LoadImageW((Win32.HINSTANCE)Module.CurrentInstance, (.)(void*)5, .IMAGE_ICON, Win32.GetSystemMetrics(.SM_CXSMICON), Win32.GetSystemMetrics(.SM_CYSMICON), .LR_DEFAULTCOLOR)),
+			hbrBackground = (Win32.HBRUSH)NotZero(backgroundBrush, Brush.GetStock(.WHITE_BRUSH)),
+			hCursor       = (Win32.HCURSOR)NotZero(cursor, Cursor.LoadFromSystem(.ARROW)),
+			hIconSm       = (Win32.HICON)NotZero(smallIcon, Win32.LoadImageW((Win32.HINSTANCE)Module.CurrentInstance, (.)(void*)5, .IMAGE_ICON, SystemMetrics.SmallIcon.Width, SystemMetrics.SmallIcon.Height, .LR_DEFAULTCOLOR)),
 			hIcon         = (Win32.HICON)NotZero(icon, Icon.LoadFromSystem(IDI.APPLICATION)),
 			hInstance     = (.)NotZero(module, Module.CurrentInstance),
 			lpfnWndProc   = windowProc ?? => WindowProc,
@@ -63,6 +63,11 @@ static
 		let atom = Win32.RegisterClassExW(&wc);
 		return atom != 0 ? WindowClass(atom) : .Err;
 	}
+}
+
+public static class SystemMetrics
+{
+	public static Size SmallIcon => .(Win32.GetSystemMetrics(.SM_CXSMICON), Win32.GetSystemMetrics(.SM_CYSMICON));
 }
 
 // TODO: extend this struct
@@ -106,157 +111,6 @@ public struct WindowClass
 		return !IsAtom(v);
 	}
 }
-
-/*public class WindowClassBuilder
-{
-	Win32.WNDCLASSEXW mStruct;
-	Span<char16>      mClassName ~ if (_.Ptr != null) delete _.Ptr;
-	Span<char16>      mMenuName ~ if (_.Ptr != null) delete _.Ptr;
-
-	[AllowAppend]
-	public this(String className)
-	{
-		// if (className == null)
-			// return;
-
-		int encodedLen = UTF16.GetEncodedLen(className);
-		char16* _append1 = append char16[encodedLen+1]* (?);
-		mClassName = .(_append1, encodedLen);
-	
-		UTF16.Encode(className, (.)mClassName.Ptr, encodedLen);
-		mClassName[encodedLen] = 0;
-	}
-
-	static void SetVar(String value, ref Span<char16> dest)
-	{
-		if (dest.Ptr != null)
-			delete dest.Ptr;
-
-		int encodedLen = UTF16.GetEncodedLen(value);
-		dest.Ptr = new char16[encodedLen+1]* (?);
-		dest.Length = encodedLen;
-
-		UTF16.Encode(value, dest.Ptr, encodedLen);
-		dest[encodedLen] = 0;
-	}
-
-	public void FillMissingValues()
-	{
-		mStruct.cbSize = sizeof(Win32.WNDCLASSEXW);
-		// mWndClassInfo.lpfnWndProc = ...;
-
-		if (mStruct.hInstance == 0)
-			mStruct.hInstance = (Win32.HINSTANCE)Module.CurrentInstance;
-
-		if (mStruct.hIcon == 0)
-			mStruct.hIcon = Icon.LoadFromSystem(.APPLICATION);
-
-		if (mStruct.hCursor == 0)
-			mStruct.hCursor = Cursor.LoadFromSystem(.ARROW);
-
-		if (mStruct.hbrBackground == 0)
-			mStruct.hbrBackground = Win32.GetStockObject(.WHITE_BRUSH);
-
-		if (mStruct.hIconSm == 0)
-			mStruct.hIconSm = Win32.LoadImageW((Win32.HINSTANCE)Module.CurrentInstance, (.)(void*)5, .IMAGE_ICON, Win32.GetSystemMetrics(.SM_CXSMICON), Win32.GetSystemMetrics(.SM_CYSMICON), .LR_DEFAULTCOLOR);
-
-		if (mStruct.lpfnWndProc == null)
-			mStruct.lpfnWndProc = => WindowProc;
-	}
-
-	public void UseStyle(Win32.WNDCLASS_STYLES style)
-	{
-		mStruct.style = style;
-	}
-
-	public void UseWindowProc(Win32.WNDPROC proc)
-	{
-		mStruct.lpfnWndProc = proc;
-	}
-
-	public void UseStandardIcon()
-	{
-		mStruct.hIcon = Icon.LoadFromSystem(.APPLICATION);
-	}
-
-	public void UseIcon(Win32.HICON icon)
-	{
-		mStruct.hIcon = icon;
-	}
-
-	public void UseStandardSmallIcon()
-	{
-		mStruct.hIconSm = // Icon.LoadFromSystem(.APPLICATION);
-			Win32.LoadImageW((Win32.HINSTANCE)Module.CurrentInstance, (.)(void*)5, .IMAGE_ICON, Win32.GetSystemMetrics(.SM_CXSMICON), Win32.GetSystemMetrics(.SM_CYSMICON), .LR_DEFAULTCOLOR);
-	}
-
-	public void UseSmallIcon(Win32.HICON icon)
-	{
-		mStruct.hIconSm = icon;
-	}
-
-	public void UseStandardCursor()
-	{
-		mStruct.hCursor = Cursor.LoadFromSystem(.ARROW);
-	}
-
-	public void SetClassName(String name)
-	{
-		SetVar(name, ref mClassName);
-	}
-
-	public void SetMenuName(String name)
-	{
-		SetVar(name, ref mMenuName);
-	}
-
-	public void IncludeStyle(Win32.WNDCLASS_STYLES style)
-	{
-		mStruct.style |= style;
-	}
-
-	public void ExcludeStyle(Win32.WNDCLASS_STYLES style)
-	{
-		mStruct.style &= ~style;
-	}
-
-	public enum SystemBrush
-	{
-		White,
-		Black,
-		DarkGray,
-		Gray,
-		LightGray,
-		Hollow,
-		Null,
-	}
-
-	public void UseStockBackground(SystemBrush brush = .Null)
-	{
-		Win32.GET_STOCK_OBJECT_FLAGS flag;
-
-		switch (brush)
-		{
-		case .White: flag = .WHITE_BRUSH;
-		case .Black: flag = .BLACK_BRUSH;
-		case .DarkGray: flag = .DKGRAY_BRUSH;
-		case .Gray: flag = .GRAY_BRUSH;
-		case .LightGray: flag = .LTGRAY_BRUSH;
-		case .Hollow: flag = .HOLLOW_BRUSH;
-		case .Null: flag = .NULL_BRUSH;
-		}
-		mStruct.hbrBackground = Win32.GetStockObject(flag);
-	}
-
-	public Result<uint16> Register()
-	{
-		let r = Win32.RegisterClassExW(&mStruct);
-
-		if (r == 0)
-			return .Err;
-		return r;
-	}
-} */
 
 public class EventLoop
 {
