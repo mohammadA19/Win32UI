@@ -76,6 +76,7 @@ static
 	}
 }
 
+// TODO: extend this struct
 public struct WindowClass
 {
 	char16* mClassName;
