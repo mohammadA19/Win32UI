@@ -12,17 +12,6 @@ static
 		return value != default ? value : valueIfZero;
 	}
 
-	static ModuleHandle sInstance = 0;
-	public static ModuleHandle CurrentInstance
-	{
-		get
-		{
-			if (sInstance == 0)
-				sInstance = (.)Win32.GetModuleHandleW(null);
-			return sInstance;
-		}
-	}
-
 	static Win32.WNDCLASSEXW PrepareWndClassExW(
 		BrushHandle backgroundBrush = 0,
 		CursorHandle cursor = 0,
@@ -40,10 +29,10 @@ static
 			cbClsExtra    = extraClassBytes,
 			cbWndExtra    = extraWindowBytes,
 			hbrBackground = NotZero((Win32.HBRUSH)backgroundBrush, Win32.GetStockObject(.WHITE_BRUSH)),
-			hCursor       = NotZero((Win32.HCURSOR)cursor, Win32.LoadCursorW(0, Win32.IDC_ARROW)),
-			hIconSm       = NotZero((Win32.HICON)smallIcon, Win32.LoadImageW((Win32.HINSTANCE)CurrentInstance, (.)(void*)5, .IMAGE_ICON, Win32.GetSystemMetrics(.SM_CXSMICON), Win32.GetSystemMetrics(.SM_CYSMICON), .LR_DEFAULTCOLOR)),
-			hIcon         = NotZero((Win32.HICON)icon, Win32.LoadIconW(0, Win32.IDI_APPLICATION)),
-			hInstance     = (.)NotZero(module, CurrentInstance),
+			hCursor       = NotZero((Win32.HCURSOR)cursor, Cursor.LoadFromSystem(.ARROW)),
+			hIconSm       = NotZero((Win32.HICON)smallIcon, Win32.LoadImageW((Win32.HINSTANCE)Module.CurrentInstance, (.)(void*)5, .IMAGE_ICON, Win32.GetSystemMetrics(.SM_CXSMICON), Win32.GetSystemMetrics(.SM_CYSMICON), .LR_DEFAULTCOLOR)),
+			hIcon         = (Win32.HICON)NotZero(icon, Icon.LoadFromSystem(IDI.APPLICATION)),
+			hInstance     = (.)NotZero(module, Module.CurrentInstance),
 			lpfnWndProc   = windowProc ?? => WindowProc,
 			// lpszClassName = ... ,
 			// lpszMenuName  = ... ,
@@ -124,17 +113,6 @@ public struct WindowClass
 	Span<char16>      mClassName ~ if (_.Ptr != null) delete _.Ptr;
 	Span<char16>      mMenuName ~ if (_.Ptr != null) delete _.Ptr;
 
-	static ModuleHandle sInstance = 0;
-	public static ModuleHandle CurrentInstance
-	{
-		get
-		{
-			if (sInstance == 0)
-				sInstance = (.)Win32.GetModuleHandleW(null);
-			return sInstance;
-		}
-	}
-
 	[AllowAppend]
 	public this(String className)
 	{
@@ -168,19 +146,19 @@ public struct WindowClass
 		// mWndClassInfo.lpfnWndProc = ...;
 
 		if (mStruct.hInstance == 0)
-			mStruct.hInstance = (Win32.HINSTANCE)CurrentInstance;
+			mStruct.hInstance = (Win32.HINSTANCE)Module.CurrentInstance;
 
 		if (mStruct.hIcon == 0)
-			mStruct.hIcon = Win32.LoadIconW(0, Win32.IDI_APPLICATION);
+			mStruct.hIcon = Icon.LoadFromSystem(.APPLICATION);
 
 		if (mStruct.hCursor == 0)
-			mStruct.hCursor = Win32.LoadCursorW(0, Win32.IDC_ARROW);
+			mStruct.hCursor = Cursor.LoadFromSystem(.ARROW);
 
 		if (mStruct.hbrBackground == 0)
 			mStruct.hbrBackground = Win32.GetStockObject(.WHITE_BRUSH);
 
 		if (mStruct.hIconSm == 0)
-			mStruct.hIconSm = Win32.LoadImageW((Win32.HINSTANCE)CurrentInstance, (.)(void*)5, .IMAGE_ICON, Win32.GetSystemMetrics(.SM_CXSMICON), Win32.GetSystemMetrics(.SM_CYSMICON), .LR_DEFAULTCOLOR);
+			mStruct.hIconSm = Win32.LoadImageW((Win32.HINSTANCE)Module.CurrentInstance, (.)(void*)5, .IMAGE_ICON, Win32.GetSystemMetrics(.SM_CXSMICON), Win32.GetSystemMetrics(.SM_CYSMICON), .LR_DEFAULTCOLOR);
 
 		if (mStruct.lpfnWndProc == null)
 			mStruct.lpfnWndProc = => WindowProc;
@@ -198,7 +176,7 @@ public struct WindowClass
 
 	public void UseStandardIcon()
 	{
-		mStruct.hIcon = Win32.LoadIconW(0, Win32.IDI_APPLICATION);
+		mStruct.hIcon = Icon.LoadFromSystem(.APPLICATION);
 	}
 
 	public void UseIcon(Win32.HICON icon)
@@ -208,8 +186,8 @@ public struct WindowClass
 
 	public void UseStandardSmallIcon()
 	{
-		mStruct.hIconSm = // Win32.LoadIconW(0, Win32.IDI_APPLICATION);
-			Win32.LoadImageW((Win32.HINSTANCE)CurrentInstance, (.)(void*)5, .IMAGE_ICON, Win32.GetSystemMetrics(.SM_CXSMICON), Win32.GetSystemMetrics(.SM_CYSMICON), .LR_DEFAULTCOLOR);
+		mStruct.hIconSm = // Icon.LoadFromSystem(.APPLICATION);
+			Win32.LoadImageW((Win32.HINSTANCE)Module.CurrentInstance, (.)(void*)5, .IMAGE_ICON, Win32.GetSystemMetrics(.SM_CXSMICON), Win32.GetSystemMetrics(.SM_CYSMICON), .LR_DEFAULTCOLOR);
 	}
 
 	public void UseSmallIcon(Win32.HICON icon)
@@ -219,44 +197,7 @@ public struct WindowClass
 
 	public void UseStandardCursor()
 	{
-		mStruct.hCursor = Win32.LoadCursorW(0, Win32.IDC_ARROW);
-	}
-
-	public enum SystemCursor : int
-	{
-		Arrow,
-		IBeam, Wait, Cross, UpArrow, Size, Icon,
-		SizeNWSE, SizeNESW, SizeWE, SizeNS, SizeAll,
-		No, Hand, AppStarting, Help, Pin, Person,
-	}
-
-	public void UseSystemCursor(SystemCursor cursor)
-	{
-		void* val;
-
-		switch (cursor)
-		{
-		case .Arrow:       val = Win32.IDC_ARROW;
-		case .IBeam:       val = Win32.IDC_IBEAM;
-		case .Wait:        val = Win32.IDC_WAIT;
-		case .Cross:       val = Win32.IDC_CROSS;
-		case .UpArrow:     val = Win32.IDC_UPARROW;
-		case .Size:        val = Win32.IDC_SIZE;
-		case .Icon:        val = Win32.IDC_ICON;
-		case .SizeNWSE:    val = Win32.IDC_SIZENWSE;
-		case .SizeNESW:    val = Win32.IDC_SIZENESW;
-		case .SizeWE:      val = Win32.IDC_SIZEWE;
-		case .SizeNS:      val = Win32.IDC_SIZENS;
-		case .SizeAll:     val = Win32.IDC_SIZEALL;
-		case .No:          val = Win32.IDC_NO;
-		case .Hand:        val = Win32.IDC_HAND;
-		case .AppStarting: val = Win32.IDC_APPSTARTING;
-		case .Help:        val = Win32.IDC_HELP;
-		case .Pin:         val = Win32.IDC_PIN;
-		case .Person:      val = Win32.IDC_PERSON;
-		}
-
-		mStruct.hCursor = Win32.LoadCursorW(0, (.)val);
+		mStruct.hCursor = Cursor.LoadFromSystem(.ARROW);
 	}
 
 	public void SetClassName(String name)
@@ -316,37 +257,6 @@ public struct WindowClass
 		return r;
 	}
 } */
-
-[CRepr]
-public struct Point
-{
-	public this(int32 x = 0, int32 y = 0) => (X, Y) = (x, y);
-
-	public int32 X { get; set mut; }
-	public int32 Y { get; set mut; }
-
-	public static explicit operator Win32.POINT(Self val) => .() { x = val.X, y = val.Y};
-	public static explicit operator Self(Win32.POINT val) => .(val.x, val.y);
-}
-
-[CRepr]
-public struct Size
-{
-	public this(int32 width = 0, int32 height = 0) => (Width, Height) = (width, height);
-
-	public int32 Width { get; set mut; }
-	public int32 Height { get; set mut; }
-
-	public static explicit operator Win32.SIZE(Self val) => .() { cx = val.Width, cy = val.Height };
-	public static explicit operator Self(Win32.SIZE val) => .(val.cx, val.cy);
-}
-
-public struct WindowHandle : Win32.HWND;
-public struct MenuHandle : Win32.HMENU;
-public struct ModuleHandle : Win32.HINSTANCE;
-public struct BrushHandle : Win32.HBRUSH;
-public struct IconHandle : Win32.HICON;
-public struct CursorHandle : Win32.HCURSOR;
 
 public class EventLoop
 {
@@ -488,7 +398,7 @@ static
 
 		let result = Win32.CreateWindowExW((.)(exStyle ?? cParams.ExStyle), className?.ToScopedNativeWChar!() ?? cParams.WindowClass, 
 			(windowName ?? cParams.WindowName).ToScopedNativeWChar!(),  (.)(style ?? cParams.Style), 
-			pos.X, pos.Y, sz.Width, sz.Height, (.)(parent ?? cParams.Parent), (.)(menu ?? cParams.Menu), (.)CurrentInstance, null);
+			pos.X, pos.Y, sz.Width, sz.Height, (.)(parent ?? cParams.Parent), (.)(menu ?? cParams.Menu), (.)Module.CurrentInstance, null);
 
 		return result != 0 ? (.)result : .Err;
 	}
