@@ -4069,7 +4069,7 @@ public static class Win32
 	[CRepr]
 	public struct MSG
 	{
-		public HWND hwnd;
+		public WindowHandle hwnd;
 		public uint32 message;
 		public WPARAM wParam;
 		public LPARAM lParam;
@@ -4131,25 +4131,25 @@ public static class Win32
 		public WNDPROC lpfnWndProc;
 		public int32 cbClsExtra;
 		public int32 cbWndExtra;
-		public HINSTANCE hInstance;
-		public HICON hIcon;
-		public HCURSOR hCursor;
-		public HBRUSH hbrBackground;
+		public ModuleHandle hInstance;
+		public IconHandle hIcon;
+		public CursorHandle hCursor;
+		public BrushHandle hbrBackground;
 		public PWSTR lpszMenuName;
 		public PWSTR lpszClassName;
-		public HICON hIconSm;
+		public IconHandle hIconSm;
 	}
 
-	public function LRESULT WNDPROC(HWND param0, uint32 param1, WPARAM param2, LPARAM param3);
+	public function LRESULT WNDPROC(WindowHandle param0, uint32 param1, WPARAM param2, LPARAM param3);
 
 	[Import("USER32.lib"), CLink, CallingConvention(.Stdcall)]
-	public static extern LRESULT CallWindowProcW(WNDPROC lpPrevWndFunc, HWND hWnd, uint32 Msg, WPARAM wParam, LPARAM lParam);
+	public static extern LRESULT CallWindowProcW(WNDPROC lpPrevWndFunc, WindowHandle hWnd, uint32 Msg, WPARAM wParam, LPARAM lParam);
 
 	[Import("USER32.lib"), CLink, CallingConvention(.Stdcall)]
-	public static extern HWND CreateWindowExW(WINDOW_EX_STYLE dwExStyle, PWSTR lpClassName, PWSTR lpWindowName, WINDOW_STYLE dwStyle, int32 X, int32 Y, int32 nWidth, int32 nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, void* lpParam);
+	public static extern WindowHandle CreateWindowExW(WINDOW_EX_STYLE dwExStyle, PWSTR lpClassName, PWSTR lpWindowName, WINDOW_STYLE dwStyle, int32 X, int32 Y, int32 nWidth, int32 nHeight, WindowHandle hWndParent, HMENU hMenu, ModuleHandle hInstance, void* lpParam);
 
 	[Import("USER32.lib"), CLink, CallingConvention(.Stdcall)]
-	public static extern LRESULT DefWindowProcW(HWND hWnd, uint32 Msg, WPARAM wParam, LPARAM lParam);
+	public static extern LRESULT DefWindowProcW(WindowHandle hWnd, uint32 Msg, WPARAM wParam, LPARAM lParam);
 
 	[Import("USER32.lib"), CLink, CallingConvention(.Stdcall)]
 	public static extern LRESULT DispatchMessageW(MSG* lpMsg);
@@ -4158,10 +4158,10 @@ public static class Win32
 	public static extern WIN32_ERROR GetLastError();
 
 	[Import("USER32.lib"), CLink, CallingConvention(.Stdcall)]
-	public static extern BOOL GetMessageW(MSG* lpMsg, HWND hWnd, uint32 wMsgFilterMin, uint32 wMsgFilterMax);
+	public static extern BOOL GetMessageW(MSG* lpMsg, WindowHandle hWnd, uint32 wMsgFilterMin, uint32 wMsgFilterMax);
 
 	[Import("KERNEL32.lib"), CLink, CallingConvention(.Stdcall)]
-	public static extern HINSTANCE GetModuleHandleW(PWSTR lpModuleName);
+	public static extern ModuleHandle GetModuleHandleW(PWSTR lpModuleName);
 
 	[Import("GDI32.lib"), CLink, CallingConvention(.Stdcall)]
 	public static extern HGDIOBJ GetStockObject(GET_STOCK_OBJECT_FLAGS i);
@@ -4170,19 +4170,19 @@ public static class Win32
 	public static extern int32 GetSystemMetrics(SYSTEM_METRICS_INDEX nIndex);
 
 	[Import("USER32.lib"), CLink, CallingConvention(.Stdcall)]
-	public static extern HCURSOR LoadCursorW(HINSTANCE hInstance, PWSTR lpCursorName);
+	public static extern CursorHandle LoadCursorW(ModuleHandle hInstance, PWSTR lpCursorName);
 
 	[Import("USER32.lib"), CLink, CallingConvention(.Stdcall)]
-	public static extern HICON LoadIconW(HINSTANCE hInstance, PWSTR lpIconName);
+	public static extern IconHandle LoadIconW(ModuleHandle hInstance, PWSTR lpIconName);
 
 	[Import("USER32.lib"), CLink, CallingConvention(.Stdcall)]
-	public static extern HANDLE LoadImageW(HINSTANCE hInst, PWSTR name, GDI_IMAGE_TYPE type, int32 cx, int32 cy, IMAGE_FLAGS fuLoad);
+	public static extern HANDLE LoadImageW(ModuleHandle hInst, PWSTR name, GDI_IMAGE_TYPE type, int32 cx, int32 cy, IMAGE_FLAGS fuLoad);
 
 	[Import("USER32.lib"), CLink, CallingConvention(.Stdcall)]
-	public static extern MESSAGEBOX_RESULT MessageBoxW(HWND hWnd, PWSTR lpText, PWSTR lpCaption, MESSAGEBOX_STYLE uType);
+	public static extern MESSAGEBOX_RESULT MessageBoxW(WindowHandle hWnd, PWSTR lpText, PWSTR lpCaption, MESSAGEBOX_STYLE uType);
 
 	[Import("USER32.lib"), CLink, CallingConvention(.Stdcall)]
-	public static extern BOOL PeekMessageW(MSG* lpMsg, HWND hWnd, uint32 wMsgFilterMin, uint32 wMsgFilterMax, PEEK_MESSAGE_REMOVE_TYPE wRemoveMsg);
+	public static extern BOOL PeekMessageW(MSG* lpMsg, WindowHandle hWnd, uint32 wMsgFilterMin, uint32 wMsgFilterMax, PEEK_MESSAGE_REMOVE_TYPE wRemoveMsg);
 
 	[Import("USER32.lib"), CLink, CallingConvention(.Stdcall)]
 	public static extern void PostQuitMessage(int32 nExitCode);

@@ -28,11 +28,11 @@ static
 			cbSize        = sizeof(Win32.WNDCLASSEXW),
 			cbClsExtra    = extraClassBytes,
 			cbWndExtra    = extraWindowBytes,
-			hbrBackground = (Win32.HBRUSH)NotZero(backgroundBrush, Brush.GetStock(.WHITE_BRUSH)),
-			hCursor       = (Win32.HCURSOR)NotZero(cursor, Cursor.LoadFromSystem(.ARROW)),
-			hIconSm       = (Win32.HICON)NotZero(smallIcon, Win32.LoadImageW((Win32.HINSTANCE)Module.CurrentInstance, (.)(void*)5, .IMAGE_ICON, SystemMetrics.SmallIcon.Width, SystemMetrics.SmallIcon.Height, .LR_DEFAULTCOLOR)),
-			hIcon         = (Win32.HICON)NotZero(icon, Icon.LoadFromSystem(IDI.APPLICATION)),
-			hInstance     = (.)NotZero(module, Module.CurrentInstance),
+			hbrBackground = NotZero(backgroundBrush, Brush.GetStock(.WHITE_BRUSH)),
+			hCursor       = NotZero(cursor, Cursor.LoadFromSystem(.ARROW)),
+			hIconSm       = NotZero(smallIcon, Win32.LoadImageW(Module.CurrentInstance, (.)(void*)5, .IMAGE_ICON, SystemMetrics.SmallIcon.Width, SystemMetrics.SmallIcon.Height, .LR_DEFAULTCOLOR)),
+			hIcon         = NotZero(icon, Icon.LoadFromSystem(IDI.APPLICATION)),
+			hInstance     = NotZero(module, Module.CurrentInstance),
 			lpfnWndProc   = windowProc ?? => WindowProc,
 			// lpszClassName = ... ,
 			// lpszMenuName  = ... ,
@@ -250,9 +250,9 @@ static
 		let pos = position ?? cParams.Position;
 		let sz = size ?? cParams.Size;
 
-		let result = Win32.CreateWindowExW((.)(exStyle ?? cParams.ExStyle), className?.ToScopedNativeWChar!() ?? cParams.WindowClass, 
-			(windowName ?? cParams.WindowName).ToScopedNativeWChar!(),  (.)(style ?? cParams.Style), 
-			pos.X, pos.Y, sz.Width, sz.Height, (.)(parent ?? cParams.Parent), (.)(menu ?? cParams.Menu), (.)Module.CurrentInstance, null);
+		let result = Win32.CreateWindowExW(exStyle ?? cParams.ExStyle, className?.ToScopedNativeWChar!() ?? cParams.WindowClass, 
+			(windowName ?? cParams.WindowName).ToScopedNativeWChar!(),  style ?? cParams.Style, 
+			pos.X, pos.Y, sz.Width, sz.Height, parent ?? cParams.Parent, menu ?? cParams.Menu, Module.CurrentInstance, null);
 
 		return result != 0 ? (.)result : .Err;
 	}
