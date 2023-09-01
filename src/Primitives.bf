@@ -1,5 +1,6 @@
 
 using System;
+using System.Diagnostics;
 namespace Win32UI;
 
 [CRepr]
@@ -26,123 +27,113 @@ public struct Size
 	public static explicit operator Self(Win32.SIZE val) => .(val.cx, val.cy);
 }
 
-public struct WindowHandle : Win32.HWND;
-public struct MenuHandle : Win32.HMENU;
-public struct ModuleHandle : Win32.HINSTANCE;
-public struct BrushHandle : Win32.HBRUSH;
+public struct Window;
+public struct Menu;
 
-public struct IconHandle : Win32.HICON
+public static struct Module
 {
+	private static Module* sCurrentInstance = default;
+	public static Module* CurrentInstance
+	{
+	    get
+	    {
+	        if (sCurrentInstance == default)
+	            sCurrentInstance = (.)Win32.GetModuleHandleW(null);
+	        return sCurrentInstance;
+	    }
+	}
 }
 
-public struct CursorHandle : Win32.HCURSOR
+public static struct Icon
 {
-
-}
-
-public static class Module
-{
-    private static ModuleHandle sCurrentInstance = 0;
-    public static ModuleHandle CurrentInstance 
-    {
-        get
-        {
-            if (sCurrentInstance == 0)
-                sCurrentInstance = (.)Win32.GetModuleHandleW(null);
-            return sCurrentInstance;
-        }
-    }
-}
-
-public static class Icon
-{
-    public enum SystemIcons : uint
-    {
-        APPLICATION = 32512,
+	public enum SystemIcons : uint
+	{
+	    APPLICATION = 32512,
 	    QUESTION = 32514,
 	    WINLOGO = 32517,
 	    SHIELD = 32518,
 	    WARNING = 32515,
 	    ERROR = 32513,
 	    INFORMATION = 32516,
-    }
+	}
 
-    public typealias IDI = SystemIcons;
+	public typealias IDI = SystemIcons;
 
-    public static IconHandle LoadFromSystem(SystemIcons icon)
-    {
-        return Win32.LoadIconW(0, (.)icon);
-    }
+	public static Icon* LoadFromSystem(SystemIcons icon)
+	{
+	    return Win32.LoadIconW(default, (.)(void*)(int)icon);
+	}
 
-    public static Result<IconHandle> LoadFromModule(ModuleHandle module, String iconName)
-    {
-        Debug.Assert(iconName != null, nameof(iconName) + " parameter must not be null");
-        return TRY!( Win32.LoadIconW(module, iconName.ToScopedNativeWChar!()) );
-    }
+	public static Icon* LoadFromModule(Module* module, String iconName)
+	{
+	    Debug.Assert(iconName != null, nameof(iconName) + " parameter must not be null");
+	    return Win32.LoadIconW(module, iconName.ToScopedNativeWChar!());
+	}
 
-    public static Result<IconHandle> LoadFromModule(ModuleHandle module, char16* iconName)
-    {
-        Debug.Assert(iconName != null, nameof(iconName) + " parameter must not be null");
-        return TRY!( Win32.LoadIconW(module, iconName) );
-    }
+	public static Icon* LoadFromModule(Module* module, char16* iconName)
+	{
+	    Debug.Assert(iconName != null, nameof(iconName) + " parameter must not be null");
+	    return Win32.LoadIconW(module, iconName);
+	}
 
-    public static Result<IconHandle> LoadFromModule(ModuleHandle module, uint16 iconOrdinal)
-    {
-        return TRY!( Win32.LoadIconW(module, (void*)(uint)iconOrdinal) );
-    }
+	public static Icon* LoadFromModule(Module* module, uint16 iconOrdinal)
+	{
+	    return Win32.LoadIconW(module, (char16*)(void*)(uint)iconOrdinal);
+	}
 }
 
-public static class Cursor
+public static struct Cursor
 {
-    public enum SystemCursors : uint
-    {
-        ARROW = 32512,
-        IBEAM = 32513,
-        WAIT = 32514,
-        CROSS = 32515,
-        UPARROW = 32516,
-        SIZE = 32640,
-        ICON = 32641,
-        SIZENWSE = 32642,
-        SIZENESW = 32643,
-        SIZEWE = 32644,
-        SIZENS = 32645,
-        SIZEALL = 32646,
-        NO = 32648,
-        HAND = 32649,
-        APPSTARTING = 32650,
-        HELP = 32651,
-        PIN = 32671,
-        PERSON = 32672,
-    }
+	public enum SystemCursors : uint
+	{
+	    ARROW = 32512,
+	    IBEAM = 32513,
+	    WAIT = 32514,
+	    CROSS = 32515,
+	    UPARROW = 32516,
+	    SIZE = 32640,
+	    ICON = 32641,
+	    SIZENWSE = 32642,
+	    SIZENESW = 32643,
+	    SIZEWE = 32644,
+	    SIZENS = 32645,
+	    SIZEALL = 32646,
+	    NO = 32648,
+	    HAND = 32649,
+	    APPSTARTING = 32650,
+	    HELP = 32651,
+	    PIN = 32671,
+	    PERSON = 32672,
+	}
 
-    public typealias IDC = SystemCursors;
+	public typealias IDC = SystemCursors;
 
-    public static CursorHandle LoadFromSystem(SystemCursors cursor)
-    {
-        return Win32.LoadCursorW(0, (.)cursor);
-    }
+	public static Cursor* LoadFromSystem(SystemCursors cursor)
+	{
+	    return Win32.LoadCursorW(default, (.)(void*)(int)cursor);
+	}
 
-    public static Result<CursorHandle> LoadFromModule(ModuleHandle module, String cursorName)
-    {
-        Debug.Assert(cursorName != null, nameof(cursorName) + " parameter must not be null");
-        return TRY!( Win32.LoadCursorW(module, cursorName.ToScopedNativeWChar!()) );
-    }
+	public static Cursor* LoadFromModule(Module* module, String cursorName)
+	{
+	    Debug.Assert(cursorName != null, nameof(cursorName) + " parameter must not be null");
+	    return Win32.LoadCursorW(module, cursorName.ToScopedNativeWChar!());
+	}
 
-    public static Result<IconHandle> LoadFromModule(ModuleHandle module, char16* cursorName)
-    {
-        Debug.Assert(cursorName != null, nameof(cursorName) + " parameter must not be null");
-        return TRY!( Win32.LoadCursorW(module, cursorName) );
-    }
+	public static Cursor* LoadFromModule(Module* module, char16* cursorName)
+	{
+	    Debug.Assert(cursorName != null, nameof(cursorName) + " parameter must not be null");
+	    return Win32.LoadCursorW(module, cursorName);
+	}
 
-    public static Result<IconHandle> LoadFromModule(ModuleHandle module, uint16 cursorOrdinal)
-    {
-        return TRY!( Win32.LoadCursorW(module, (void*)(uint)cursorOrdinal) );
-    }
+	public static Cursor* LoadFromModule(Module* module, uint16 cursorOrdinal)
+	{
+	    return Win32.LoadCursorW(module, (.)(void*)(uint)cursorOrdinal);
+	}
 }
 
-public static class Brush
+public static struct Brush
 {
+	[AllowDuplicates]
     public enum StockBrushes : uint32
     {
         BLACK_BRUSH = 4,
@@ -155,8 +146,8 @@ public static class Brush
 		WHITE_BRUSH = 0,
     }
 
-    public static BrushHandle GetStock(StockBrushes brush)
+    public static Brush* GetStock(StockBrushes brush)
     {
-        return Win32.GetStockObject((.)brush);
+        return (.)(void*)Win32.GetStockObject((.)brush);
     }
 }
