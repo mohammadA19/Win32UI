@@ -27,6 +27,20 @@ public struct Size
 	public static explicit operator Self(Win32.SIZE val) => .(val.cx, val.cy);
 }
 
+[Union]
+public struct Rect
+{
+	public using RectAsBounds Bounds;
+	public using RectAsPoints Points;
+	public       int32[4] Values;
+
+	[Packed]
+	public struct RectAsBounds : this(int32 Left, int32 Top, int32 Right, int32 Bottom);
+
+	[Packed]
+	public struct RectAsPoints : this(Point TopLeft, Point BottomRight);
+}
+
 public struct Window;
 public struct Menu;
 
