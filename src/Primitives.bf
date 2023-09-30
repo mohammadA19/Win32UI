@@ -4,25 +4,15 @@ using System.Diagnostics;
 namespace Win32UI;
 
 [CRepr]
-public struct Point
+public struct Point : this(int32 X, int32 Y)
 {
-	public this(int32 x = 0, int32 y = 0) => (X, Y) = (x, y);
-
-	public int32 X { get; set mut; }
-	public int32 Y { get; set mut; }
-
 	public static explicit operator Win32.POINT(Self val) => .() { x = val.X, y = val.Y};
 	public static explicit operator Self(Win32.POINT val) => .(val.x, val.y);
 }
 
 [CRepr]
-public struct Size
+public struct Size : this(int32 Width, int32 Height)
 {
-	public this(int32 width = 0, int32 height = 0) => (Width, Height) = (width, height);
-
-	public int32 Width { get; set mut; }
-	public int32 Height { get; set mut; }
-
 	public static explicit operator Win32.SIZE(Self val) => .() { cx = val.Width, cy = val.Height };
 	public static explicit operator Self(Win32.SIZE val) => .(val.cx, val.cy);
 }
@@ -165,3 +155,11 @@ public static struct Brush
         return (.)(void*)Win32.GetStockObject((.)brush);
     }
 }
+
+public static struct DC;
+public static struct Bitmap;
+public static struct Region;
+public static struct Pen;
+public static struct Font;
+public static struct Palette;
+public static struct Monitor;

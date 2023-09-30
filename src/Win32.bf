@@ -19,6 +19,15 @@ public static class Win32
 	public typealias LRESULT = int;
 	public typealias WPARAM = uint;
 
+	typealias HDC = int;
+	typealias CreatedHDC = int;
+	typealias HBITMAP = int;
+	typealias HRGN = int;
+	typealias HPEN = int;
+	typealias HFONT = int;
+	typealias HPALETTE = int;
+	typealias HMONITOR = int;
+
 	public const int32 CW_USEDEFAULT = -2147483648;
 
 	public const PWSTR IDC_ARROW = (PWSTR)(void*)32512;
